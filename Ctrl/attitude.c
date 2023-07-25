@@ -9,8 +9,8 @@
 #include "ctrl_types.h"
 #include "senser_types.h"
 #include <math.h>
-#include <mpu6050.h>
 #include <utils/ctrl_math.h>
+#include <icm20602.h>
 #include "tim.h"
 
 ////---------------------------------陀螺仪相关变量------------------------------
@@ -143,8 +143,8 @@ void Gyro_And_Acc_Calibrate(Axis3i16* _gyro_drift, Axis3i16* _acc_drift){
     Axis3i64 _sum_acc = {0,0,0};
 
     for (int i = 0; i < CALIBRATION_SAMPLES; ++i) {
-        //TODO:这里换做自己的读取代码
-        mpu6000AccAndGyroRead(&_acc, &_gyro);
+        //NOTE:这里换做自己的读取代码
+        icm20602AccAndGyroRead(&_acc, &_gyro);
         _sum_gyro.x += _gyro.x;
         _sum_gyro.y += _gyro.y;
         _sum_gyro.z += _gyro.z;

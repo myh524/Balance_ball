@@ -10,18 +10,18 @@
 extern "C" {
 #endif
 
-#include <mpu6050.h>
 #include <ctrl_types.h>
 #include <senser_types.h>
 #include "stdio.h"
 #include "pid.h"
 
-
+extern float ctrl_time;
 extern ctrl_rc_t ctrl_rc;
 extern ctrl_state_t ctrl_state;
 extern ctrl_setpoint_t ctrl_setpoint;
 extern ctrl_setpoint_t ctrl_setpoint_offboard;
 extern ctrl_out_t ctrl_out;
+extern motorSpeed_t motorSpeed;
 
 extern pid_calc_t roll_pid;
 extern pid_calc_t pitch_pid;
@@ -33,9 +33,10 @@ extern pid_calc_t yawRate_pid;
 void CtrlPIDInit(void);
 
 void CtrlStateUpdate(const Axis3f* _gyro_f, const attitude_t* _attitude, ctrl_state_t* _state);
-void CtrlSetpointUpdate(const ctrl_rc_t* _rc, ctrl_setpoint_t* _setpoint, ctrl_setpoint_t* _setpoint_offboard);
+void CtrlSetpointUpdate(const ctrl_rc_t* _rc, ctrl_setpoint_t* _setpoint);
 void CtrlUpdate(const ctrl_rc_t* _rc,const ctrl_state_t* _state, ctrl_setpoint_t* _setpoint, ctrl_out_t* _out);
 
+void DriverSpeedUpdate(const ctrl_rc_t* _rc, const ctrl_out_t* _out, motorSpeed_t* _motor);
 
 #ifdef __cplusplus
 }

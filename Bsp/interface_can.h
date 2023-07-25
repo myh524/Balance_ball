@@ -8,6 +8,7 @@
 #include "stdio.h"
 #include "common_inc.h"
 #include "can.h"
+#include "ctrl_types.h"
 
 
 #define M0 0x001 //偏航轴飞轮
@@ -19,11 +20,10 @@ typedef union{
     float data_f;
 }driver_data;
 
-void can_send_message(uint16_t id, uint8_t *buf,uint8_t len);
-void can_send_cmd(uint16_t id);
+
 void Drive_Init(uint32_t CAN_ID);
 void Driver_control(uint32_t CAN_ID, float target);
-
+void DriverCmdSend(ctrl_rc_t* _rc, motorSpeed_t * _motor);
 
 
 #endif //BALANCEBALL_INTERFACE_CAN_H

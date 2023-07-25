@@ -11,6 +11,10 @@ extern "C" {
 
 #include "main.h"
 
+#define DEBUG_UART		   (huart1)
+#define WIFI_UART		   (huart2)
+
+
 
 void Main(void);
 

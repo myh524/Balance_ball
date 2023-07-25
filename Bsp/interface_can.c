@@ -3,7 +3,7 @@
 //
 
 #include "interface_can.h"
-
+#include "ctrl_types.h"
 
 
 CAN_TxHeaderTypeDef txMessage;  //鍙戦?佺粨鏋勪綋
@@ -62,4 +62,25 @@ void Driver_control(uint32_t CAN_ID, float target)
         send_ch[i]=_data.data_ch[i];
     }
     can_send_message((CAN_ID<<5) + 0x00d, send_ch,4);
+}
+
+void DriverCmdSend(ctrl_rc_t* _rc, motorSpeed_t * _motor){
+    //再次检测是否解锁
+    //这里因为可能没收到ibus信息，故不能检测到no就return
+    if(_rc->armed == RC_ARMED_YES){
+        //输出三个转轴的转速
+        //TODO:需不需要三轴一块发？
+        Driver_control(M0,_motor->m1);
+        Driver_control(M1,_motor->m2);
+        Driver_control(M2,_motor->m3);
+    } else {
+        //输出三个转轴的转速
+        //TODO:需不需要三轴一块发？
+        Driver_control(M0,0.0f);
+        Driver_control(M1,0.0f);
+        Driver_control(M2,0.0f);
+
+    }
+
+
 }

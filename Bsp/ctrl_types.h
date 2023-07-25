@@ -82,11 +82,28 @@ typedef struct
     float thrust;  //油门控制输出    //range -1 ~ 1
 } ctrl_out_t;
 
+//三轴飞轮速度
+typedef struct
+{
+    float m1;
+    float m2;
+    float m3;
+}motorSpeed_t;
+
+
+
 ////==================================-ctrl-rc-============================================
+
+#define RC_CHANNLE_ROLL     0    //正
+#define RC_CHANNLE_PITCH    1    //反
+#define RC_CHANNLE_THRUST   2    //正
+#define RC_CHANNLE_YAW      3    //正
+#define RC_CHANNLE_ARMED    4
+#define RC_CHANNLE_MODE     5
 
 #define RC_MODE_STABILIZED 1000
 #define RC_MODE_POSITION 1500
-#define RC_MODE_OFFBOARD 2000
+#define RC_MODE_FORWARD 2000
 
 #define RC_ARMED_NO  1000
 #define RC_ARMED_YES 2000

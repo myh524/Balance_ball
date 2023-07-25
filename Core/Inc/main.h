@@ -63,6 +63,8 @@ void Error_Handler(void);
 #define RGB_G_GPIO_Port GPIOB
 #define RGB_B_Pin GPIO_PIN_1
 #define RGB_B_GPIO_Port GPIOB
+#define ICM_CS_Pin GPIO_PIN_12
+#define ICM_CS_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
