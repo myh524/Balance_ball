@@ -11,6 +11,7 @@
 #include <math.h>
 #include <utils/ctrl_math.h>
 #include <icm20602.h>
+#include <icm42688.h>
 #include "tim.h"
 
 ////---------------------------------陀螺仪相关变量------------------------------
@@ -32,7 +33,7 @@ attitude_t state_attitude_angle = {0,0.0f,0.0f,0.0f};
 ////--------------------------------------------姿态解算
 // Definitions
 
-#define sampleFreq	1000.0f			// sample frequency in Hz
+#define sampleFreq	100.0f			// sample frequency in Hz
 #define twoKpDef	(2.0f * 0.5f)	// 2 * proportional gain     (2.0f * 0.5f)
 #define twoKiDef	(2.0f * 0.0f)	// 2 * integral gain
 
@@ -144,7 +145,8 @@ void Gyro_And_Acc_Calibrate(Axis3i16* _gyro_drift, Axis3i16* _acc_drift){
 
     for (int i = 0; i < CALIBRATION_SAMPLES; ++i) {
         //NOTE:这里换做自己的读取代码
-        icm20602AccAndGyroRead(&_acc, &_gyro);
+//        icm20602AccAndGyroRead(&_acc, &_gyro);
+        icm42688AccAndGyroRead(&_acc, &_gyro);
         _sum_gyro.x += _gyro.x;
         _sum_gyro.y += _gyro.y;
         _sum_gyro.z += _gyro.z;

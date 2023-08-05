@@ -97,18 +97,16 @@ static uint8_t icm20602_self_check (void)
 //-------------------------------------------------------------------------------------------------------------------
 uint8_t icm20602AccAndGyroRead(Axis3i16* _accRaw,Axis3i16* _gyroRaw)
 {
-    uint8_t dat_acc[6];                                             //加速度计数据
-    uint8_t dat_gyro[6];                                            //陀螺仪数据
+    uint8_t dat[14];                                             //加速度计,陀螺仪数据
 
-    icm20602_read_registers(ICM20602_ACCEL_XOUT_H, dat_acc, 6);
-    _accRaw->x = (int16_t)(((uint16_t)dat_acc[0] << 8 | dat_acc[1]));
-    _accRaw->y = (int16_t)(((uint16_t)dat_acc[2] << 8 | dat_acc[3]));
-    _accRaw->z = (int16_t)(((uint16_t)dat_acc[4] << 8 | dat_acc[5]));
+    icm20602_read_registers(ICM20602_ACCEL_XOUT_H, dat, 14);
+    _accRaw->x = (int16_t) -(((uint16_t)dat[0] << 8 | dat[1]));
+    _accRaw->y = (int16_t) -(((uint16_t)dat[2] << 8 | dat[3]));
+    _accRaw->z = (int16_t)(((uint16_t)dat[4] << 8 | dat[5]));
 
-    icm20602_read_registers(ICM20602_GYRO_XOUT_H, dat_gyro, 6);
-    _gyroRaw->x = (int16_t)(((uint16_t)dat_gyro[0] << 8 | dat_gyro[1]));
-    _gyroRaw->y = (int16_t)(((uint16_t)dat_gyro[2] << 8 | dat_gyro[3]));
-    _gyroRaw->z = (int16_t)(((uint16_t)dat_gyro[4] << 8 | dat_gyro[5]));
+    _gyroRaw->x = (int16_t) -(((uint16_t)dat[8] << 8 | dat[9]));
+    _gyroRaw->y = (int16_t) -(((uint16_t)dat[10] << 8 | dat[11]));
+    _gyroRaw->z = (int16_t)(((uint16_t)dat[12] << 8 | dat[13]));
 
     return 1;
 }
@@ -134,9 +132,9 @@ void icm20602AccTransformUnit(Axis3i16* _acc, Axis3f* _acc_f, Axis3i16* _acc_dri
 //-------------------------------------------------------------------------------------------------------------------
 void icm20602GyroTransformUnit(Axis3i16* _gyro, Axis3f* _gyro_f, Axis3i16* _gyro_drift)
 {
-    _gyro_f->x = (float) (_gyro->x - _gyro_drift->x) * icm20602_transition_factor[1] * (3.1415f / 180);
-    _gyro_f->y = (float) (_gyro->y - _gyro_drift->y) * icm20602_transition_factor[1] * (3.1415f / 180);
-    _gyro_f->z = (float) (_gyro->z - _gyro_drift->z) * icm20602_transition_factor[1] * (3.1415f / 180);
+    _gyro_f->x = (float) (_gyro->x - _gyro_drift->x) / icm20602_transition_factor[1] * (3.1415f / 180);
+    _gyro_f->y = (float) (_gyro->y - _gyro_drift->y) / icm20602_transition_factor[1] * (3.1415f / 180);
+    _gyro_f->z = (float) (_gyro->z - _gyro_drift->z) / icm20602_transition_factor[1] * (3.1415f / 180);
 }
 
 //-------------------------------------------------------------------------------------------------------------------

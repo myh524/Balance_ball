@@ -10,7 +10,9 @@
 //--------------------------------------------------------------------------------
 //DMA读出来的
 uint8_t ibus_rx_buffer[IBUS_BUFFER_LENGTH] = {0};
+uint8_t i2bus_rx_buffer[I2BUS_BUFFER_LENGTH];
 //最后获得的
+I2BUS_config I2BUS;
 uint16_t RC_Channels[IBUS_USER_CHANNELS] = {0};
 
 
@@ -64,4 +66,24 @@ void Ibus_Get_Control_Value(uint16_t* channels,ctrl_rc_t* rc){
     //拨杆通道直接赋值
     rc->armed = channels[RC_CHANNLE_ARMED];
     rc->mode = channels[RC_CHANNLE_MODE];
+}
+
+void I2bus_Read(uint8_t* rx_buffer, I2BUS_config* _I2BUS)
+{
+    _I2BUS->_data_1.data_u8[0] = rx_buffer[0];
+    _I2BUS->_data_1.data_u8[1] = rx_buffer[1];
+    _I2BUS->_data_2.data_u8[0] = rx_buffer[2];
+    _I2BUS->_data_2.data_u8[1] = rx_buffer[3];
+    for(uint8_t counter=0;counter<4;counter++)
+    {
+        _I2BUS->_data_roll.data_u8[0+counter] = rx_buffer[4+counter];
+    }
+    for(uint8_t counter=0;counter<4;counter++)
+    {
+        _I2BUS->_data_pitch.data_u8[0+counter] = rx_buffer[8+counter];
+    }
+    for(uint8_t counter=0;counter<4;counter++)
+    {
+        _I2BUS->_data_yaw.data_u8[0+counter] = rx_buffer[12+counter];
+    }
 }

@@ -38,7 +38,7 @@ int _write(int fd, char *ptr, int len)
 
     if (fd == STDOUT_FILENO || fd == STDERR_FILENO)
     {
-        hstatus = HAL_UART_Transmit_DMA(gHuart, (uint8_t *) ptr, len);
+        hstatus = HAL_UART_Transmit(gHuart, (uint8_t *) ptr, len, 1);
         if (hstatus == HAL_OK)
             return len;
         else

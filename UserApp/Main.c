@@ -7,6 +7,7 @@
 #include <attitude.h>
 #include <utils/ctrl_math.h>
 #include <icm20602.h>
+#include <icm42688.h>
 #include <ibus.h>
 #include <retarget.h>
 #include "common_inc.h"
@@ -26,6 +27,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
     if (htim->Instance == TIM3) {
 
         //读取角速度和加速度
+//        icm42688AccAndGyroRead(&acc, &gyro);
+//        icm42688AccTransformUnit(&acc,&acc_f,&acc_drift);//转换单位
+//        icm42688GyroTransformUnit(&gyro,&gyro_f,&gyro_drift);//转换单位
+
         icm20602AccAndGyroRead(&acc, &gyro);
         icm20602AccTransformUnit(&acc,&acc_f,&acc_drift);//转换单位
         icm20602GyroTransformUnit(&gyro,&gyro_f,&gyro_drift);//转换单位
@@ -60,7 +65,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         if(ctrl_time > period){
             ctrl_time = 0;
         }
-
     }
 }
 
@@ -72,8 +76,8 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
     if(huart->Instance==USART2)
     {
         //串口dma+空闲中断，接受wifi的指令
-        Ibus_Read_Channels(ibus_rx_buffer,RC_Channels);
-        Ibus_Get_Control_Value(RC_Channels, &ctrl_rc);
+//        Ibus_Read_Channels(ibus_rx_buffer,RC_Channels);
+//        Ibus_Get_Control_Value(RC_Channels, &ctrl_rc);
         //重新打开DMA接收 idle中断
         HAL_UARTEx_ReceiveToIdle_DMA(&WIFI_UART, ibus_rx_buffer, sizeof(ibus_rx_buffer));
     }
@@ -88,8 +92,11 @@ void Main(void) {
 
     //init icm20602
     icm20602Init();
+//    icm42688Init();
+    Gyro_And_Acc_Calibrate(&gyro_drift, &acc_drift);
 
     //初始化电机
+    HAL_Delay(1000);
     Drive_Init(M0);
     Drive_Init(M1);
     Drive_Init(M2);
@@ -103,15 +110,18 @@ void Main(void) {
     //PID
     CtrlPIDInit();
 
-    while (true){
+    while (1){
 
         // Check for UART errors and restart recieve DMA transfer if required
-        if (WIFI_UART.ErrorCode != HAL_UART_ERROR_NONE)
-        {
-            HAL_UART_AbortReceive(&WIFI_UART);
-            HAL_UARTEx_ReceiveToIdle_DMA(&WIFI_UART, ibus_rx_buffer, sizeof(ibus_rx_buffer));
-        }
-
+//        if (WIFI_UART.ErrorCode != HAL_UART_ERROR_NONE)
+//        {
+//            HAL_UART_AbortReceive(&WIFI_UART);
+//            HAL_UARTEx_ReceiveToIdle_DMA(&WIFI_UART, ibus_rx_buffer, sizeof(ibus_rx_buffer));
+//        }
+//        printf("%.3f,%.3f,%.3f\r\n",state_attitude_angle.roll,state_attitude_angle.pitch,state_attitude_angle.yaw);
+//        printf("%.3f,%.3f,%.3f\r\n",gyro_f.x,gyro_f.y,gyro_f.z);
+//        DriverCmdSend(&ctrl_rc, &motorSpeed);
+        printf("Hello World!\r\n");
         //Blink
         HAL_GPIO_TogglePin(RGB_B_GPIO_Port,RGB_B_Pin);
         //-----------------------------Delay
@@ -119,4 +129,12 @@ void Main(void) {
     }
 }
 
-
+//微秒延时函数
+void delay_us(uint32_t us)
+{
+    uint32_t delay = (HAL_RCC_GetHCLKFreq() / 4000000 * us);
+    while (delay--)
+    {
+        ;
+    }
+}
