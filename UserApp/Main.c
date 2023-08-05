@@ -8,7 +8,7 @@
 #include <utils/ctrl_math.h>
 #include <icm20602.h>
 #include <icm42688.h>
-#include <ibus.h>
+#include <interface_uart.h>
 #include <retarget.h>
 #include "common_inc.h"
 #include "can.h"
@@ -68,7 +68,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
     }
 }
 
-
 /* UART Callbacks -------------------------------------------------------*/
 //空闲中断在这里进行处理
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
@@ -76,10 +75,9 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
     if(huart->Instance==USART2)
     {
         //串口dma+空闲中断，接受wifi的指令
-//        Ibus_Read_Channels(ibus_rx_buffer,RC_Channels);
-//        Ibus_Get_Control_Value(RC_Channels, &ctrl_rc);
+        WIFIRead(wifi_rx_buffer, &ctrl_rc);
         //重新打开DMA接收 idle中断
-        HAL_UARTEx_ReceiveToIdle_DMA(&WIFI_UART, ibus_rx_buffer, sizeof(ibus_rx_buffer));
+        HAL_UARTEx_ReceiveToIdle_DMA(&WIFI_UART, wifi_rx_buffer, sizeof(wifi_rx_buffer));
     }
 }
 
@@ -105,7 +103,7 @@ void Main(void) {
     HAL_TIM_Base_Start_IT(&htim3);
 
     //wifi 串口DMA空闲中断 enable
-    HAL_UARTEx_ReceiveToIdle_DMA(&WIFI_UART, ibus_rx_buffer, sizeof(ibus_rx_buffer));
+    HAL_UARTEx_ReceiveToIdle_DMA(&WIFI_UART, wifi_rx_buffer, sizeof(wifi_rx_buffer));
 
     //PID
     CtrlPIDInit();
@@ -113,14 +111,13 @@ void Main(void) {
     while (1){
 
         // Check for UART errors and restart recieve DMA transfer if required
-//        if (WIFI_UART.ErrorCode != HAL_UART_ERROR_NONE)
-//        {
-//            HAL_UART_AbortReceive(&WIFI_UART);
-//            HAL_UARTEx_ReceiveToIdle_DMA(&WIFI_UART, ibus_rx_buffer, sizeof(ibus_rx_buffer));
-//        }
+        if (WIFI_UART.ErrorCode != HAL_UART_ERROR_NONE)
+        {
+            HAL_UART_AbortReceive(&WIFI_UART);
+            HAL_UARTEx_ReceiveToIdle_DMA(&WIFI_UART, wifi_rx_buffer, sizeof(wifi_rx_buffer));
+        }
 //        printf("%.3f,%.3f,%.3f\r\n",state_attitude_angle.roll,state_attitude_angle.pitch,state_attitude_angle.yaw);
 //        printf("%.3f,%.3f,%.3f\r\n",gyro_f.x,gyro_f.y,gyro_f.z);
-//        DriverCmdSend(&ctrl_rc, &motorSpeed);
         printf("Hello World!\r\n");
         //Blink
         HAL_GPIO_TogglePin(RGB_B_GPIO_Port,RGB_B_Pin);
