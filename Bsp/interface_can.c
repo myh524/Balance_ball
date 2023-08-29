@@ -11,7 +11,6 @@ CAN_RxHeaderTypeDef rxMessage;  //鎺ュ彈缁撴瀯浣?
 
 
 //物理层代码
-
 void can_send_message(uint16_t id, uint8_t *buf,uint8_t len)
 {
     uint32_t tx_mail = CAN_TX_MAILBOX0;
@@ -67,23 +66,27 @@ void Driver_control(uint32_t CAN_ID, float target)
     can_send_message((CAN_ID<<5) + 0x00d, send_ch,4);
 }
 
+void Drive_Clear_Error(uint32_t CAN_ID)
+{
+    can_send_cmd((CAN_ID<<5) + 0x018); //清除错误
+}
+
+
 void DriverCmdSend(ctrl_rc_t* _rc, motorSpeed_t * _motor){
     //再次检测是否解锁
     //这里因为可能没收到ibus信息，故不能检测到no就return
-//    if(_rc->armed == RC_ARMED_YES){
+    if(_rc->armed == RC_ARMED_YES){
         //输出三个转轴的转速
-        //TODO:需不需要三轴一块发？
         Driver_control(M0,_motor->m1);
         Driver_control(M1,_motor->m2);
         Driver_control(M2,_motor->m3);
-//    } else {
-//        //输出三个转轴的转速
-//        //TODO:需不需要三轴一块发？
-//        Driver_control(M0,10.0f);
-//        Driver_control(M1,10.0f);
-//        Driver_control(M2,10.0f);
-//
-//    }
+    } else {
+        //输出三个转轴的转速
+        Driver_control(M0,0.0f);
+        Driver_control(M1,0.0f);
+        Driver_control(M2,0.0f);
+
+    }
 
 
 }

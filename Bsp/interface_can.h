@@ -23,6 +23,7 @@ typedef union{
 
 void Drive_Init(uint32_t CAN_ID);
 void Driver_control(uint32_t CAN_ID, float target);
+void Drive_Clear_Error(uint32_t CAN_ID);
 void DriverCmdSend(ctrl_rc_t* _rc, motorSpeed_t * _motor);
 
 

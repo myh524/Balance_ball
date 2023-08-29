@@ -7,6 +7,8 @@ float icm20602_transition_factor[2] = {4096, 16.384f};
 static uint8_t tx, rx;
 static uint8_t tx_buff[14];
 
+#define CALIBRATION_SAMPLES 500 // 校准样本数
+
 //-------------------------------------------------------------------------------------------------------------------
 // 函数简介     ICM20602 写寄存器
 // 参数说明     reg             寄存器地址
@@ -69,7 +71,7 @@ static void icm20602_read_registers (uint8_t reg, uint8_t *data, uint32_t len)
 // 使用示例     icm20602_self_check();
 // 备注信息     内部调用
 //-------------------------------------------------------------------------------------------------------------------
-static uint8_t icm20602_self_check (void)
+uint8_t icm20602_self_check (void)
 {
     uint8_t dat = 0, return_state = 0;
     uint16_t timeout_count = 0;
@@ -82,7 +84,7 @@ static uint8_t icm20602_self_check (void)
             break;
         }
         dat = icm20602_read_register(ICM20602_WHO_AM_I);
-        HAL_Delay(10);
+        HAL_Delay(1);
     }
     return return_state;
 }
@@ -100,13 +102,13 @@ uint8_t icm20602AccAndGyroRead(Axis3i16* _accRaw,Axis3i16* _gyroRaw)
     uint8_t dat[14];                                             //加速度计,陀螺仪数据
 
     icm20602_read_registers(ICM20602_ACCEL_XOUT_H, dat, 14);
-    _accRaw->x = (int16_t) -(((uint16_t)dat[0] << 8 | dat[1]));
+    _accRaw->x = (int16_t) (((uint16_t)dat[0] << 8 | dat[1]));
     _accRaw->y = (int16_t) -(((uint16_t)dat[2] << 8 | dat[3]));
-    _accRaw->z = (int16_t)(((uint16_t)dat[4] << 8 | dat[5]));
+    _accRaw->z = (int16_t) -(((uint16_t)dat[4] << 8 | dat[5]));
 
-    _gyroRaw->x = (int16_t) -(((uint16_t)dat[8] << 8 | dat[9]));
+    _gyroRaw->x = (int16_t) (((uint16_t)dat[8] << 8 | dat[9]));
     _gyroRaw->y = (int16_t) -(((uint16_t)dat[10] << 8 | dat[11]));
-    _gyroRaw->z = (int16_t)(((uint16_t)dat[12] << 8 | dat[13]));
+    _gyroRaw->z = (int16_t) -(((uint16_t)dat[12] << 8 | dat[13]));
 
     return 1;
 }
@@ -269,4 +271,38 @@ uint8_t icm20602Init(void)
         icm20602_write_register(ICM20602_ACCEL_CONFIG_2, 0x03);                 // Average 4 samples   44.8HZ   //0x23 Average 16 samples
     }while(0);
     return return_state;
+}
+
+
+
+void ICM20602_Gyro_And_Acc_Calibrate(Axis3i16* _gyro_drift, Axis3i16* _acc_drift){
+
+    //暂时使用
+    Axis3i16 _gyro = {0,0,0};
+    Axis3i16 _acc = {0,0,0};
+
+    //为了防止越界，这个数据类型整的大点
+    Axis3i64 _sum_gyro = {0,0,0};
+    Axis3i64 _sum_acc = {0,0,0};
+
+    for (int i = 0; i < CALIBRATION_SAMPLES; ++i) {
+        icm20602AccAndGyroRead(&_acc, &_gyro);
+
+        _sum_gyro.x += _gyro.x;
+        _sum_gyro.y += _gyro.y;
+        _sum_gyro.z += _gyro.z;
+
+        _sum_acc.x +=_acc.x;
+        _sum_acc.y +=_acc.y;
+        _sum_acc.z +=_acc.z;
+
+        HAL_Delay(1);
+    }
+    _gyro_drift->x = (int16_t) (_sum_gyro.x / CALIBRATION_SAMPLES);
+    _gyro_drift->y = (int16_t) (_sum_gyro.y / CALIBRATION_SAMPLES);
+    _gyro_drift->z = (int16_t) (_sum_gyro.z / CALIBRATION_SAMPLES);
+
+    _acc_drift->x = (int16_t) (_sum_acc.x / CALIBRATION_SAMPLES);
+    _acc_drift->y = (int16_t) (_sum_acc.y / CALIBRATION_SAMPLES);
+    _acc_drift->z = (int16_t) (_sum_acc.z / CALIBRATION_SAMPLES);
 }

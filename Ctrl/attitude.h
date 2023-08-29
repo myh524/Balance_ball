@@ -25,7 +25,7 @@ extern float q[4];
 extern attitude_t state_attitude;
 extern attitude_t state_attitude_angle;
 
-void Gyro_And_Acc_Calibrate(Axis3i16* _gyro_drift, Axis3i16* _acc_drift);
+
 void MahonyAHRSupdateIMU(float _q[4], float gx, float gy, float gz, float ax, float ay, float az);
 void SytnocuiAHRSupdateIMU(float q[4], float gx, float gy, float gz, float ax, float ay, float az);
 void AttitudeQuaternionToEulerAngle(const float q[4], attitude_t* attitude);

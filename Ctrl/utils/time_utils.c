@@ -33,3 +33,13 @@ void delayMicroseconds(uint32_t us)
         __NOP();
 }
 
+
+//微秒延时函数
+void delay_us(uint32_t us)
+{
+    uint32_t delay = (HAL_RCC_GetHCLKFreq() / 4000000 * us);
+    while (delay--)
+    {
+        ;
+    }
+}

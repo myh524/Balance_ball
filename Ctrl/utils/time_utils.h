@@ -10,6 +10,7 @@ extern "C" {
 uint32_t micros(void);
 uint32_t millis(void);
 void delayMicroseconds(uint32_t us);
+void delay_us(uint32_t us);
 
 #ifdef __cplusplus
 }

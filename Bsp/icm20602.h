@@ -103,11 +103,12 @@ typedef enum
 
 
 //================================================ICM20602 应用层函数==================================================
-
+uint8_t icm20602_self_check (void);
 uint8_t icm20602Init(void);
 uint8_t icm20602AccAndGyroRead(Axis3i16* _accRaw,Axis3i16* _gyroRaw);
 void icm20602AccTransformUnit(Axis3i16* _acc, Axis3f* _acc_f, Axis3i16* _acc_drift);
 void icm20602GyroTransformUnit(Axis3i16* _gyro, Axis3f* _gyro_f, Axis3i16* _gyro_drift);
+void ICM20602_Gyro_And_Acc_Calibrate(Axis3i16* _gyro_drift, Axis3i16* _acc_drift);
 
 #endif
 

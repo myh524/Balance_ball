@@ -131,41 +131,6 @@ void MahonyAHRSupdateIMU(float _q[4], float gx, float gy, float gz, float ax, fl
 }
 
 
-void Gyro_And_Acc_Calibrate(Axis3i16* _gyro_drift, Axis3i16* _acc_drift){
-
-    #define CALIBRATION_SAMPLES 500 // 校准样本数
-
-    //暂时使用
-    Axis3i16 _gyro = {0,0,0};
-    Axis3i16 _acc = {0,0,0};
-
-    //为了防止越界，这个数据类型整的大点
-    Axis3i64 _sum_gyro = {0,0,0};
-    Axis3i64 _sum_acc = {0,0,0};
-
-    for (int i = 0; i < CALIBRATION_SAMPLES; ++i) {
-        //NOTE:这里换做自己的读取代码
-//        icm20602AccAndGyroRead(&_acc, &_gyro);
-        icm42688AccAndGyroRead(&_acc, &_gyro);
-        _sum_gyro.x += _gyro.x;
-        _sum_gyro.y += _gyro.y;
-        _sum_gyro.z += _gyro.z;
-
-        _sum_acc.x +=_acc.x;
-        _sum_acc.y +=_acc.y;
-        _sum_acc.z +=_acc.z;
-
-        HAL_Delay(1);
-    }
-    _gyro_drift->x = (int16_t) (_sum_gyro.x / CALIBRATION_SAMPLES);
-    _gyro_drift->y = (int16_t) (_sum_gyro.y / CALIBRATION_SAMPLES);
-    _gyro_drift->z = (int16_t) (_sum_gyro.z / CALIBRATION_SAMPLES);
-
-    _acc_drift->x = (int16_t) (_sum_acc.x / CALIBRATION_SAMPLES);
-    _acc_drift->y = (int16_t) (_sum_acc.y / CALIBRATION_SAMPLES);
-    _acc_drift->z = (int16_t) (_sum_acc.z / CALIBRATION_SAMPLES);
-}
-
 
 void AttitudeQuaternionToEulerAngle(const float _q[4], attitude_t* _attitude){
     // 传入的结果是指针，结果返回到传入参数地址内
@@ -180,9 +145,9 @@ void AttitudeQuaternionToEulerAngle(const float _q[4], attitude_t* _attitude){
     // pitch
     float sinp = 2 * (w*y - z*x);
     if (fabsf(sinp) >= 1)
-        _attitude->pitch = -copysignf(M_PI / 2, sinp); // use 90 degrees if out of range
+        _attitude->pitch = copysignf(M_PI / 2, sinp); // use 90 degrees if out of range
     else
-        _attitude->pitch = -asinf(sinp);
+        _attitude->pitch = asinf(sinp);
     // yaw
     float siny_cosp = 2 * (w*z + x*y);
     float cosy_cosp = 1 - 2 * (y*y + z*z);

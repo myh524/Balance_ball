@@ -7,6 +7,8 @@ static uint8_t tx_buff[14];
 static float accSensitivity   = 0.0f;
 static float gyroSensitivity  = 0.0f;
 
+#define CALIBRATION_SAMPLES 500 // 校准样本数
+
 //-------------------------------------------------------------------------------------------------------------------
 // 函数简介     ICM42688 写寄存器
 // 参数说明     reg             寄存器地址
@@ -69,7 +71,7 @@ static void icm42688_read_registers (uint8_t reg, uint8_t *data, uint32_t len)
 // 使用示例     icm42688_self_check();
 // 备注信息     内部调用
 //-------------------------------------------------------------------------------------------------------------------
-static uint8_t icm42688_self_check (void)
+uint8_t icm42688_self_check (void)
 {
     uint8_t dat = 0, return_state = 0;
     uint16_t timeout_count = 0;
@@ -82,7 +84,7 @@ static uint8_t icm42688_self_check (void)
             break;
         }
         dat = icm42688_read_register(ICM42688_WHO_AM_I);
-        HAL_Delay(10);
+        HAL_Delay(1);
     }
     return return_state;
 }
@@ -219,13 +221,13 @@ uint8_t icm42688AccAndGyroRead(Axis3i16* _accRaw,Axis3i16* _gyroRaw)
     uint8_t dat[12];                                             //加速度计,陀螺仪数据
 
     icm42688_read_registers(ICM42688_ACCEL_DATA_X1, dat, 12);
-    _accRaw->x = (int16_t) -(((uint16_t)dat[0] << 8 | dat[1]));
+    _accRaw->x = (int16_t) (((uint16_t)dat[0] << 8 | dat[1]));
     _accRaw->y = (int16_t) -(((uint16_t)dat[2] << 8 | dat[3]));
-    _accRaw->z = (int16_t)(((uint16_t)dat[4] << 8 | dat[5]));
+    _accRaw->z = (int16_t) -(((uint16_t)dat[4] << 8 | dat[5]));
 
-    _gyroRaw->x = (int16_t) -(((uint16_t)dat[6] << 8 | dat[7]));
+    _gyroRaw->x = (int16_t) (((uint16_t)dat[6] << 8 | dat[7]));
     _gyroRaw->y = (int16_t) -(((uint16_t)dat[8] << 8 | dat[9]));
-    _gyroRaw->z = (int16_t)(((uint16_t)dat[10] << 8 | dat[11]));
+    _gyroRaw->z = (int16_t) -(((uint16_t)dat[10] << 8 | dat[11]));
 
     return 1;
 }
@@ -253,4 +255,37 @@ void icm42688GyroTransformUnit(Axis3i16* _gyro, Axis3f* _gyro_f, Axis3i16* _gyro
     _gyro_f->x = (float) (_gyro->x - _gyro_drift->x) * gyroSensitivity * (3.1415f / 180);
     _gyro_f->y = (float) (_gyro->y - _gyro_drift->y) * gyroSensitivity * (3.1415f / 180);
     _gyro_f->z = (float) (_gyro->z - _gyro_drift->z) * gyroSensitivity * (3.1415f / 180);
+}
+
+
+void ICM42688P_Gyro_And_Acc_Calibrate(Axis3i16* _gyro_drift, Axis3i16* _acc_drift){
+
+    //暂时使用
+    Axis3i16 _gyro = {0,0,0};
+    Axis3i16 _acc = {0,0,0};
+
+    //为了防止越界，这个数据类型整的大点
+    Axis3i64 _sum_gyro = {0,0,0};
+    Axis3i64 _sum_acc = {0,0,0};
+
+    for (int i = 0; i < CALIBRATION_SAMPLES; ++i) {
+        icm42688AccAndGyroRead(&_acc, &_gyro);
+
+        _sum_gyro.x += _gyro.x;
+        _sum_gyro.y += _gyro.y;
+        _sum_gyro.z += _gyro.z;
+
+        _sum_acc.x +=_acc.x;
+        _sum_acc.y +=_acc.y;
+        _sum_acc.z +=_acc.z;
+
+        HAL_Delay(1);
+    }
+    _gyro_drift->x = (int16_t) (_sum_gyro.x / CALIBRATION_SAMPLES);
+    _gyro_drift->y = (int16_t) (_sum_gyro.y / CALIBRATION_SAMPLES);
+    _gyro_drift->z = (int16_t) (_sum_gyro.z / CALIBRATION_SAMPLES);
+
+    _acc_drift->x = (int16_t) (_sum_acc.x / CALIBRATION_SAMPLES);
+    _acc_drift->y = (int16_t) (_sum_acc.y / CALIBRATION_SAMPLES);
+    _acc_drift->z = (int16_t) (_sum_acc.z / CALIBRATION_SAMPLES);
 }
