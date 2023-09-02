@@ -159,7 +159,7 @@ void Main(void) {
         //-------------------------------------------------------------------------------------
 
 //        printf("%.3f,%.3f,%.3f\r\n", motorSpeed.m1, motorSpeed.m2, motorSpeed.m3);
-//        printf("%.3f,%.3f,%.3f\r\n", state_attitude_angle.roll, state_attitude_angle.pitch, state_attitude_angle.yaw);
+        printf("%.3f,%.3f,%.3f\r\n", state_attitude_angle.roll, state_attitude_angle.pitch, state_attitude_angle.yaw);
 //        printf("%.3f,%.3f,%.3f,%.3f,%.3f,%.3f\r\n",gyro_f.x,gyro_f.y,gyro_f.z,acc_f.x,acc_f.y,acc_f.z);
 //        printf("Hello World!\r\n");
 

@@ -37,10 +37,9 @@ void CtrlPIDInit(void){
     PID_init(&pitch_pid, PID_POSITION, 1.0f,0,0, 100,0);
     PID_init(&yaw_pid, PID_POSITION, 1.0f,0,0, 100,0);
     //内环 不要d，因为角速度本来就很抖
-    PID_init(&rollRate_pid, PID_POSITION, 30.0f,0,0, 100,0);
-    PID_init(&pitchRate_pid, PID_POSITION, 30.0f,0,0, 100,0);
-    PID_init(&yawRate_pid, PID_POSITION, 30.0f,0,0, 100,0);
-
+    PID_init(&rollRate_pid, PID_POSITION, -15.0f,0,0, 100,0);
+    PID_init(&pitchRate_pid, PID_POSITION, -15.0f,0,0, 100,0);
+    PID_init(&yawRate_pid, PID_POSITION, -15.0f,0,0, 100,0);
 }
 
 void CtrlStateUpdate(const Axis3f* _gyro_f, const attitude_t* _attitude, ctrl_state_t* _state){
@@ -109,7 +108,7 @@ void CtrlUpdate(const ctrl_rc_t* _rc, const ctrl_state_t* _state, ctrl_setpoint_
         }
         else if(_rc->mode == RC_MODE_POSITION) //定姿模式
         {
-            //            //添加死区，如果偏差小于一定量，就算没偏差
+            ////------------------------------------------添加死区----------------------------------------------------////
             if( fabsf(_state->attitude.roll - _setpoint->attitude.roll) <= 10){
                 _setpoint->attitude.roll = _state->attitude.roll;
             }
@@ -132,6 +131,8 @@ void CtrlUpdate(const ctrl_rc_t* _rc, const ctrl_state_t* _state, ctrl_setpoint_
             _out->yaw = PID_calc(&yawRate_pid, _state->attitudeRate.yaw, _setpoint->attitudeRate.yaw);
 
             ////------------------------------------------俩环叠加，内环为干扰观测器----------------------------------------////
+
+
         }
         else if(_rc->mode == RC_MODE_FORWARD) //开环前向模式
         {
