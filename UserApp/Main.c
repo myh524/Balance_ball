@@ -53,13 +53,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
         //PID控制更新
         //更新当前姿态和目标姿态
-        ////注意！！！在这里用的是角度制
-        CtrlStateUpdate(&gyro_f,&state_attitude_angle,&ctrl_state);
+        ////注意！！！在这里用的是弧度制
+        CtrlStateUpdate(&gyro_f,&state_attitude,&ctrl_state);
         CtrlSetpointUpdate(&ctrl_rc, &ctrl_setpoint);
         //更新姿态控制pid
         CtrlUpdate(&ctrl_rc, &ctrl_state, &ctrl_setpoint, &ctrl_out);
         //更新飞轮转速到驱动板
-        DriverSpeedUpdate(&ctrl_rc, &ctrl_out, &motorSpeed);
+        DriverSpeedUpdate(&ctrl_rc, &ctrl_out,&ctrl_out_sum, &motorSpeed);
 
         //添加安全保护，如果一定时间内没有收到串口的数据，则停车
         safe_time++;

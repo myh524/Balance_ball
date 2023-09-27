@@ -103,7 +103,7 @@ typedef struct
 
 #define RC_MODE_STABILIZED 1000
 #define RC_MODE_POSITION 1500
-#define RC_MODE_FORWARD 2000
+#define RC_MODE_DEV 2000
 
 #define RC_ARMED_NO  1000
 #define RC_ARMED_YES 2000

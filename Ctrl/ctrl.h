@@ -21,6 +21,7 @@ extern ctrl_state_t ctrl_state;
 extern ctrl_setpoint_t ctrl_setpoint;
 extern ctrl_setpoint_t ctrl_setpoint_offboard;
 extern ctrl_out_t ctrl_out;
+extern ctrl_out_t ctrl_out_sum;
 extern motorSpeed_t motorSpeed;
 
 extern pid_calc_t roll_pid;
@@ -36,7 +37,8 @@ void CtrlStateUpdate(const Axis3f* _gyro_f, const attitude_t* _attitude, ctrl_st
 void CtrlSetpointUpdate(const ctrl_rc_t* _rc, ctrl_setpoint_t* _setpoint);
 void CtrlUpdate(const ctrl_rc_t* _rc,const ctrl_state_t* _state, ctrl_setpoint_t* _setpoint, ctrl_out_t* _out);
 
-void DriverSpeedUpdate(const ctrl_rc_t* _rc, const ctrl_out_t* _out, motorSpeed_t* _motor);
+void DriverSpeedUpdate(const ctrl_rc_t* _rc, const ctrl_out_t* _out, ctrl_out_t* _out_sum, motorSpeed_t* _motor);
+
 
 #ifdef __cplusplus
 }

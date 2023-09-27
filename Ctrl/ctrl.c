@@ -20,6 +20,7 @@ ctrl_state_t ctrl_state;
 ctrl_setpoint_t ctrl_setpoint;
 ctrl_setpoint_t ctrl_setpoint_offboard;
 ctrl_out_t ctrl_out;
+ctrl_out_t ctrl_out_sum;
 motorSpeed_t motorSpeed = {0.0f, 0.0f, 0.0f};
 
 //PID
@@ -30,16 +31,19 @@ pid_calc_t rollRate_pid;
 pid_calc_t pitchRate_pid;
 pid_calc_t yawRate_pid;
 
+float damp_vel = 0.8f;
+float damp_deadzone = 10.0f;
+
 void CtrlPIDInit(void){
     //初始化PID
-    //外环
-    PID_init(&roll_pid, PID_POSITION, 1.0f,0,0, 100,0);
-    PID_init(&pitch_pid, PID_POSITION, 1.0f,0,0, 100,0);
-    PID_init(&yaw_pid, PID_POSITION, 1.0f,0,0, 100,0);
+    //外环 注意现在是弧度值
+    PID_init(&roll_pid, PID_POSITION, 5.0f,0,0, 100,0);
+    PID_init(&pitch_pid, PID_POSITION, 5.0f,0,0, 100,0);
+    PID_init(&yaw_pid, PID_POSITION, 5.0f,0,0, 100,0);
     //内环 不要d，因为角速度本来就很抖
-    PID_init(&rollRate_pid, PID_POSITION, -15.0f,0,0, 100,0);
-    PID_init(&pitchRate_pid, PID_POSITION, -15.0f,0,0, 100,0);
-    PID_init(&yawRate_pid, PID_POSITION, -15.0f,0,0, 100,0);
+    PID_init(&rollRate_pid, PID_POSITION, 20.0f,0,0, 100,0);
+    PID_init(&pitchRate_pid, PID_POSITION, 20.0f,0,0, 100,0);
+    PID_init(&yawRate_pid, PID_POSITION, 20.0f,0,0, 100,0);
 }
 
 void CtrlStateUpdate(const Axis3f* _gyro_f, const attitude_t* _attitude, ctrl_state_t* _state){
@@ -49,7 +53,7 @@ void CtrlStateUpdate(const Axis3f* _gyro_f, const attitude_t* _attitude, ctrl_st
     _state->attitudeRate.pitch = _gyro_f->y;
     _state->attitudeRate.yaw = _gyro_f->z;
 
-    //注意！！！在这里用的是角度制
+    ////注意！！！在这里用的是弧度制
     _state->attitude.roll = _attitude->roll;
     _state->attitude.pitch = _attitude->pitch;
     _state->attitude.yaw = _attitude->yaw;
@@ -68,17 +72,15 @@ void CtrlSetpointUpdate(const ctrl_rc_t* _rc, ctrl_setpoint_t* _setpoint){
     else if(_rc->mode == RC_MODE_POSITION) //定姿模式
     {
         // 期望角度
-//        _setpoint->attitude.roll = 0;
-//        _setpoint->attitude.pitch = 0;
-//        _setpoint->attitude.yaw = 0;
-
         _setpoint->attitude.roll = _rc->roll;
         _setpoint->attitude.pitch = _rc->pitch;
         _setpoint->attitude.yaw = _rc->yaw;
     }
-    else if(_rc->mode == RC_MODE_FORWARD) //开环前向模式
+    else if(_rc->mode == RC_MODE_DEV) //开环前向模式
     {
-        //pass，到最底下的时候直接让转速写成时间相关的函数
+        _setpoint->attitude.roll = _rc->roll;
+        _setpoint->attitude.pitch = _rc->pitch;
+        _setpoint->attitude.yaw = _rc->yaw;
     }
     else
     {
@@ -109,16 +111,15 @@ void CtrlUpdate(const ctrl_rc_t* _rc, const ctrl_state_t* _state, ctrl_setpoint_
         else if(_rc->mode == RC_MODE_POSITION) //定姿模式
         {
             ////------------------------------------------添加死区----------------------------------------------------////
-            if( fabsf(_state->attitude.roll - _setpoint->attitude.roll) <= 10){
-                _setpoint->attitude.roll = _state->attitude.roll;
-            }
-            if( fabsf(_state->attitude.pitch - _setpoint->attitude.pitch) <= 10){
-                _setpoint->attitude.pitch = _state->attitude.pitch;
-            }
-            if( fabsf(_state->attitude.yaw - _setpoint->attitude.yaw) <= 10){
-                _setpoint->attitude.yaw = _state->attitude.yaw;
-            }
-
+//            if( fabsf(_state->attitude.roll - _setpoint->attitude.roll) <= 0.1){ //弧度值
+//                _setpoint->attitude.roll = _state->attitude.roll;
+//            }
+//            if( fabsf(_state->attitude.pitch - _setpoint->attitude.pitch) <= 0.1){
+//                _setpoint->attitude.pitch = _state->attitude.pitch;
+//            }
+//            if( fabsf(_state->attitude.yaw - _setpoint->attitude.yaw) <= 0.1){
+//                _setpoint->attitude.yaw = _state->attitude.yaw;
+//            }
 
             ////------------------------------------------普通串级环-----------------------------------------------------////
             //先算外环pid
@@ -132,11 +133,28 @@ void CtrlUpdate(const ctrl_rc_t* _rc, const ctrl_state_t* _state, ctrl_setpoint_
 
             ////------------------------------------------俩环叠加，内环为干扰观测器----------------------------------------////
 
-
         }
-        else if(_rc->mode == RC_MODE_FORWARD) //开环前向模式
+        else if(_rc->mode == RC_MODE_DEV) //开发者模式
         {
-            //pass，到最底下的时候直接让转速写成时间相关的函数
+            if( fabsf(_state->attitude.roll - _setpoint->attitude.roll) <= 0.1){ //弧度值
+                _setpoint->attitude.roll = _state->attitude.roll;
+            }
+            if( fabsf(_state->attitude.pitch - _setpoint->attitude.pitch) <= 0.1){
+                _setpoint->attitude.pitch = _state->attitude.pitch;
+            }
+            if( fabsf(_state->attitude.yaw - _setpoint->attitude.yaw) <= 0.1){
+                _setpoint->attitude.yaw = _state->attitude.yaw;
+            }
+
+            ////------------------------------------------普通串级环-----------------------------------------------------////
+            //先算外环pid
+            _setpoint->attitudeRate.roll = PID_calc(&roll_pid, _state->attitude.roll, _setpoint->attitude.roll);
+            _setpoint->attitudeRate.pitch = PID_calc(&pitch_pid, _state->attitude.pitch, _setpoint->attitude.pitch);
+            _setpoint->attitudeRate.yaw = PID_calc(&yaw_pid, _state->attitude.yaw, _setpoint->attitude.yaw);
+            //再算内环pid
+            _out->roll =  PID_calc(&rollRate_pid, _state->attitudeRate.roll, _setpoint->attitudeRate.roll);
+            _out->pitch = PID_calc(&pitchRate_pid, _state->attitudeRate.pitch, _setpoint->attitudeRate.pitch);
+            _out->yaw = PID_calc(&yawRate_pid, _state->attitudeRate.yaw, _setpoint->attitudeRate.yaw);
         }
         else
         {
@@ -158,29 +176,60 @@ void CtrlUpdate(const ctrl_rc_t* _rc, const ctrl_state_t* _state, ctrl_setpoint_
 
 
 ////---------------------------------------------about-motor-speed-------------------------------------------
-void DriverSpeedUpdate(const ctrl_rc_t* _rc, const ctrl_out_t* _out, motorSpeed_t* _motor) {
+void DriverSpeedUpdate(const ctrl_rc_t* _rc, const ctrl_out_t* _out, ctrl_out_t* _out_sum, motorSpeed_t* _motor) {
+
+    //转速分配矩阵
+    const static float speedMatrix[3][3]={
+            {0.8164966f, 0.0f, -0.5773503f},
+            {-0.4082483f, 0.7071068f, -0.5773503f},
+            {-0.4082483f, -0.7071068f, -0.5773503f}};
+
     //先判断是否解锁
     if(_rc->armed == RC_ARMED_YES){
 
-        if(_rc->mode == RC_MODE_STABILIZED || _rc->mode == RC_MODE_POSITION) //自稳模式 定点模式
+        if(_rc->mode == RC_MODE_STABILIZED
+        || _rc->mode == RC_MODE_POSITION ) //自稳模式 定点模式
         {
-            //TODO:确认一下正负是不是跟想的一样，怎么感觉是反的
-            //转速分配矩阵
-            const static float speedMatrix[3][3]={ {0.8164966f, 0.0f, -0.5773503f},
-                                                   {-0.4082483f, 0.7071068f, -0.5773503f},
-                                                   {-0.4082483f, -0.7071068f, -0.5773503f}};
-
             _motor->m1 = speedMatrix[0][0] * -_out->roll + speedMatrix[0][1] * _out->pitch + speedMatrix[0][2] * _out->yaw;
             _motor->m2 = speedMatrix[1][0] * -_out->roll + speedMatrix[1][1] * _out->pitch + speedMatrix[1][2] * _out->yaw;
             _motor->m3 = speedMatrix[2][0] * -_out->roll + speedMatrix[2][1] * _out->pitch + speedMatrix[2][2] * _out->yaw;
 
         }
-        else if(_rc->mode == RC_MODE_FORWARD) //开环前向模式
-        {
-            //时间的正弦函数
-            _motor->m1 = gain * sin_approx(ctrl_time * M_PIf * 2 / period + theta1) + dcOffset;
-            _motor->m2 = gain * sin_approx(ctrl_time * M_PIf * 2 / period + theta2) + dcOffset;
-            _motor->m3 = gain * sin_approx(ctrl_time * M_PIf * 2 / period + theta3) + dcOffset;
+        else if(_rc->mode == RC_MODE_DEV){ //开发者模式
+
+            //如果在死区，就消旋
+            // 注意这里是"+="
+//            if( fabsf( _out->roll ) < damp_deadzone ){
+//                _out_sum->roll += (_out_sum->roll > 0) ? -damp_vel : damp_vel;
+//            } else{
+//                _out_sum->roll += _out->roll;
+//            }
+//
+//            if( fabsf( _out->pitch ) < damp_deadzone ){
+//                _out_sum->pitch += (_out_sum->pitch > 0) ? -damp_vel : damp_vel;
+//            } else{
+//                _out_sum->pitch += _out->pitch;
+//            }
+//
+//            if( fabsf( _out->yaw ) < damp_deadzone ){
+//                _out_sum->yaw += (_out_sum->yaw > 0) ? -damp_vel : damp_vel;
+//            } else{
+//                _out_sum->yaw += _out->yaw;
+//            }
+
+            _out_sum->roll += _out->roll;
+            _out_sum->pitch += _out->pitch;
+            _out_sum->yaw += _out->yaw;
+
+            //限幅
+            _out_sum->roll = constrainf(_out_sum->roll,-80.0f,80.0f);
+            _out_sum->pitch = constrainf(_out_sum->pitch,-80.0f,80.0f);
+            _out_sum->yaw = constrainf(_out_sum->yaw,-80.0f,80.0f);
+
+            _motor->m1 = speedMatrix[0][0] * -_out_sum->roll + speedMatrix[0][1] * _out_sum->pitch + speedMatrix[0][2] * _out_sum->yaw;
+            _motor->m2 = speedMatrix[1][0] * -_out_sum->roll + speedMatrix[1][1] * _out_sum->pitch + speedMatrix[1][2] * _out_sum->yaw;
+            _motor->m3 = speedMatrix[2][0] * -_out_sum->roll + speedMatrix[2][1] * _out_sum->pitch + speedMatrix[2][2] * _out_sum->yaw;
+
         }
         else
         {
@@ -198,7 +247,7 @@ void DriverSpeedUpdate(const ctrl_rc_t* _rc, const ctrl_out_t* _out, motorSpeed_
     }
 
     //限幅
-    _motor->m1 = constrainf(_motor->m1,-80.0f,80.0f);
-    _motor->m2 = constrainf(_motor->m2,-80.0f,80.0f);
-    _motor->m3 = constrainf(_motor->m3,-80.0f,80.0f);
+    _motor->m1 = constrainf(_motor->m1,-100.0f,100.0f);
+    _motor->m2 = constrainf(_motor->m2,-100.0f,100.0f);
+    _motor->m3 = constrainf(_motor->m3,-100.0f,100.0f);
 }
