@@ -110,28 +110,14 @@ void CtrlUpdate(const ctrl_rc_t* _rc, const ctrl_state_t* _state, ctrl_setpoint_
         }
         else if(_rc->mode == RC_MODE_POSITION) //定姿模式
         {
-            ////------------------------------------------添加死区----------------------------------------------------////
-//            if( fabsf(_state->attitude.roll - _setpoint->attitude.roll) <= 0.1){ //弧度值
-//                _setpoint->attitude.roll = _state->attitude.roll;
-//            }
-//            if( fabsf(_state->attitude.pitch - _setpoint->attitude.pitch) <= 0.1){
-//                _setpoint->attitude.pitch = _state->attitude.pitch;
-//            }
-//            if( fabsf(_state->attitude.yaw - _setpoint->attitude.yaw) <= 0.1){
-//                _setpoint->attitude.yaw = _state->attitude.yaw;
-//            }
+            //连PID都没有
+            _out->roll =  _setpoint->attitude.roll;
+            _out->pitch = _setpoint->attitude.pitch;
+            _out->yaw =  _setpoint->attitude.yaw;
 
-            ////------------------------------------------普通串级环-----------------------------------------------------////
-            //先算外环pid
-            _setpoint->attitudeRate.roll = PID_calc(&roll_pid, _state->attitude.roll, _setpoint->attitude.roll);
-            _setpoint->attitudeRate.pitch = PID_calc(&pitch_pid, _state->attitude.pitch, _setpoint->attitude.pitch);
-            _setpoint->attitudeRate.yaw = PID_calc(&yaw_pid, _state->attitude.yaw, _setpoint->attitude.yaw);
-            //再算内环pid
-            _out->roll =  PID_calc(&rollRate_pid, _state->attitudeRate.roll, _setpoint->attitudeRate.roll);
-            _out->pitch = PID_calc(&pitchRate_pid, _state->attitudeRate.pitch, _setpoint->attitudeRate.pitch);
-            _out->yaw = PID_calc(&yawRate_pid, _state->attitudeRate.yaw, _setpoint->attitudeRate.yaw);
-
-            ////------------------------------------------俩环叠加，内环为干扰观测器----------------------------------------////
+            _out->roll = scaleRangef(_out->roll, -1, 1, -30, 30);
+            _out->pitch = scaleRangef(_out->pitch, -1, 1, -30, 30);
+            _out->yaw = scaleRangef(_out->yaw, -1, 1, -30, 30);
 
         }
         else if(_rc->mode == RC_MODE_DEV) //开发者模式
