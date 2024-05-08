@@ -185,5 +185,6 @@ uint8_t icm42688AccAndGyroRead(Axis3i16* _accRaw,Axis3i16* _gyroRaw);
 void icm42688AccTransformUnit(Axis3i16* _acc, Axis3f* _acc_f, Axis3i16* _acc_drift);
 void icm42688GyroTransformUnit(Axis3i16* _gyro, Axis3f* _gyro_f, Axis3i16* _gyro_drift);
 void ICM42688P_Gyro_And_Acc_Calibrate(Axis3i16* _gyro_drift, Axis3i16* _acc_drift);
+void ImuTransformer(Axis3i16* _acc_raw, Axis3i16* _acc,Axis3i16* _gyro_raw, Axis3i16* _gyro);
 
 #endif

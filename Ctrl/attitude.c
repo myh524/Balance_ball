@@ -10,15 +10,20 @@
 #include "senser_types.h"
 #include <math.h>
 #include <utils/ctrl_math.h>
-#include <icm20602.h>
+
+
 #include <icm42688.h>
 #include "tim.h"
 
 ////---------------------------------陀螺仪相关变量------------------------------
-Axis3i16 gyro = {0,0,0};
 Axis3i16 acc = {0,0,0};
-Axis3i16 gyro_drift = {0,0,0};
+Axis3i16 gyro = {0,0,0};
+Axis3i16 acc_raw = {0,0,0};
+Axis3i16 gyro_raw = {0,0,0};
 Axis3i16 acc_drift = {0,0,0};
+Axis3i16 gyro_drift = {0,0,0};
+Axis3i16 acc_body = {0,0,0};
+Axis3i16 gyro_body = {0,0,0};
 Axis3f acc_f = {0,0,0};
 Axis3f gyro_f = {0,0,0};
 ////---------------------------------姿态相关变量--------------------------------
@@ -28,6 +33,7 @@ float q[4] = {1.0f, 0.0f, 0.0f, 0.0f};
 attitude_t state_attitude = {0,0.0f,0.0f,0.0f};
 //角度制的欧拉角
 attitude_t state_attitude_angle = {0,0.0f,0.0f,0.0f};
+const float PI = 3.141592f;
 ////--------------------------------------------------------------------------
 
 ////--------------------------------------------姿态解算
@@ -130,8 +136,6 @@ void MahonyAHRSupdateIMU(float _q[4], float gx, float gy, float gz, float ax, fl
     //Mahony官方程序到此结束，使用时只需在函数外进行四元数反解欧拉角即可完成全部姿态解算过程
 }
 
-
-
 void AttitudeQuaternionToEulerAngle(const float _q[4], attitude_t* _attitude){
     // 传入的结果是指针，结果返回到传入参数地址内
     // 四元数反算欧拉角
@@ -154,11 +158,26 @@ void AttitudeQuaternionToEulerAngle(const float _q[4], attitude_t* _attitude){
     _attitude->yaw = atan2_approx(siny_cosp, cosy_cosp);
 }
 
-
+//这个是从芯片到模块的转换
 void AttitudeRadianToAngle(attitude_t* radian, attitude_t* angle){
+
     angle->roll = radian->roll * RAD2DEG;
     angle->pitch = radian->pitch * RAD2DEG;
     angle->yaw = radian->yaw * RAD2DEG;
 }
 
+void CoordinateRotation(Axis3i16* _acc, Axis3i16* _gyro, Axis3i16* _acc_body, Axis3i16* _gyro_body){
+    //C =
+    //        -0.408248290463863    -0.408248290463863  0.816496580927726
+    //        -0.707106781186548     0.707106781186547  -1.11022302462516e-16
+    //        -0.577350269189626    -0.577350269189626  -0.577350269189626
+    _acc_body->x=- 0.408248290463863*_acc->x - 0.408248290463863*_acc->y + 0.816496580927726*_acc->z;
+    _acc_body->y=- 0.707106781186548*_acc->x + 0.707106781186547*_acc->y - 1.11022302462516e-16*_acc->z;
+    _acc_body->z=- 0.577350269189626*_acc->x - 0.577350269189626*_acc->y - 0.577350269189626*_acc->z;
 
+    _gyro_body->x=-0.408248290463863 * _gyro->x-0.408248290463863 * _gyro->y + 0.816496580927726 *_gyro->z;
+    _gyro_body->y=-0.707106781186548 * _gyro->x+0.707106781186547 * _gyro->y - 1.11022302462516e-16*_gyro->z;
+    _gyro_body->z=-0.577350269189626 * _gyro->x-0.577350269189626 * _gyro->y - 0.577350269189626*_gyro->z;
+
+
+}

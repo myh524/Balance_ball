@@ -1,4 +1,5 @@
 #include "icm42688.h"
+#include "attitude.h"
 #include <stdio.h>
 
 static uint8_t tx, rx;
@@ -222,12 +223,14 @@ uint8_t icm42688AccAndGyroRead(Axis3i16* _accRaw,Axis3i16* _gyroRaw)
 
     icm42688_read_registers(ICM42688_ACCEL_DATA_X1, dat, 12);
     _accRaw->x = (int16_t) (((uint16_t)dat[0] << 8 | dat[1]));
-    _accRaw->y = (int16_t) -(((uint16_t)dat[2] << 8 | dat[3]));
-    _accRaw->z = (int16_t) -(((uint16_t)dat[4] << 8 | dat[5]));
+    _accRaw->y = (int16_t) (((uint16_t)dat[2] << 8 | dat[3]));
+    _accRaw->z = (int16_t) (((uint16_t)dat[4] << 8 | dat[5]));
 
     _gyroRaw->x = (int16_t) (((uint16_t)dat[6] << 8 | dat[7]));
-    _gyroRaw->y = (int16_t) -(((uint16_t)dat[8] << 8 | dat[9]));
-    _gyroRaw->z = (int16_t) -(((uint16_t)dat[10] << 8 | dat[11]));
+    _gyroRaw->y = (int16_t) (((uint16_t)dat[8] << 8 | dat[9]));
+    _gyroRaw->z = (int16_t) (((uint16_t)dat[10] << 8 | dat[11]));
+
+
 
     return 1;
 }
@@ -239,6 +242,7 @@ uint8_t icm42688AccAndGyroRead(Axis3i16* _accRaw,Axis3i16* _gyroRaw)
 //-------------------------------------------------------------------------------------------------------------------
 void icm42688AccTransformUnit(Axis3i16* _acc, Axis3f* _acc_f, Axis3i16* _acc_drift)
 {
+    //也许你看不出来我在这翻来翻去的在干啥，其实我没录写代码的素材，所以现在就瞎几把翻翻来水点时长
     _acc_f->x = (float) (_acc->x - _acc_drift->x) * 9.8f * accSensitivity;;
     _acc_f->y = (float) (_acc->y - _acc_drift->y) * 9.8f * accSensitivity;
     _acc_f->z = (float) (_acc->z ) * 9.8f * accSensitivity;
@@ -271,6 +275,8 @@ void ICM42688P_Gyro_And_Acc_Calibrate(Axis3i16* _gyro_drift, Axis3i16* _acc_drif
     for (int i = 0; i < CALIBRATION_SAMPLES; ++i) {
         icm42688AccAndGyroRead(&_acc, &_gyro);
 
+        CoordinateRotation(&acc, &gyro, &acc_body, &gyro_body);
+
         _sum_gyro.x += _gyro.x;
         _sum_gyro.y += _gyro.y;
         _sum_gyro.z += _gyro.z;
@@ -288,4 +294,16 @@ void ICM42688P_Gyro_And_Acc_Calibrate(Axis3i16* _gyro_drift, Axis3i16* _acc_drif
     _acc_drift->x = (int16_t) (_sum_acc.x / CALIBRATION_SAMPLES);
     _acc_drift->y = (int16_t) (_sum_acc.y / CALIBRATION_SAMPLES);
     _acc_drift->z = (int16_t) (_sum_acc.z / CALIBRATION_SAMPLES);
+}
+
+void ImuTransformer(Axis3i16* _acc_raw, Axis3i16* _acc,Axis3i16* _gyro_raw, Axis3i16* _gyro)
+{
+
+    _acc->x = _acc_raw->x;
+    _acc->y = _acc_raw->y;
+    _acc->z = _acc_raw->z;
+
+    _gyro->x =_gyro_raw->x;
+    _gyro->y =_gyro_raw->y;
+    _gyro->z =_gyro_raw->z;
 }

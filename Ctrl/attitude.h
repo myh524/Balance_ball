@@ -16,8 +16,12 @@ extern "C" {
 ////---------------------------------陀螺仪相关变量------------------------------
 extern Axis3i16 gyro;
 extern Axis3i16 acc;
+extern Axis3i16 acc_raw;
+extern Axis3i16 gyro_raw;
 extern Axis3i16 gyro_drift;
 extern Axis3i16 acc_drift;
+extern Axis3i16 gyro_body;
+extern Axis3i16 acc_body;
 extern Axis3f gyro_f;
 extern Axis3f acc_f;
 ////---------------------------------姿态相关变量------------------------------
@@ -30,6 +34,8 @@ void MahonyAHRSupdateIMU(float _q[4], float gx, float gy, float gz, float ax, fl
 void SytnocuiAHRSupdateIMU(float q[4], float gx, float gy, float gz, float ax, float ay, float az);
 void AttitudeQuaternionToEulerAngle(const float q[4], attitude_t* attitude);
 void AttitudeRadianToAngle(attitude_t* radian, attitude_t* angle);
+void CoordinateRotation(Axis3i16* _acc, Axis3i16* _gyro, Axis3i16* _acc_body, Axis3i16* _gyro_body);
+
 #ifdef __cplusplus
 }
 #endif

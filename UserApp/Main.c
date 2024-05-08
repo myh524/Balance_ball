@@ -6,7 +6,6 @@
 #include <interface_can.h>
 #include <attitude.h>
 #include <utils/ctrl_math.h>
-#include <icm20602.h>
 #include <icm42688.h>
 #include <interface_uart.h>
 #include <retarget.h>
@@ -33,14 +32,14 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
     if (htim->Instance == TIM3) {
 
         //读取角速度和加速度
-        if (imu_config == IMU_USE_ICM20602){
-            icm20602AccAndGyroRead(&acc, &gyro);
-            icm20602AccTransformUnit(&acc,&acc_f,&acc_drift);//转换单位
-            icm20602GyroTransformUnit(&gyro,&gyro_f,&gyro_drift);//转换单位
-        } else if(imu_config == IMU_USE_ICM42688P){
-            icm42688AccAndGyroRead(&acc, &gyro);
-            icm42688AccTransformUnit(&acc,&acc_f,&acc_drift);//转换单位
-            icm42688GyroTransformUnit(&gyro,&gyro_f,&gyro_drift);//转换单位
+        if(imu_config == IMU_USE_ICM42688P){
+            icm42688AccAndGyroRead(&acc_raw, &gyro_raw);
+            ImuTransformer(&acc_raw, &acc, &gyro_raw, &gyro);      ///对比用的，别忘了改
+
+            CoordinateRotation(&acc, &gyro, &acc_body, &gyro_body);
+
+            icm42688AccTransformUnit(&acc_body,&acc_f,&acc_drift);//转换单位
+            icm42688GyroTransformUnit(&gyro_body,&gyro_f,&gyro_drift);//转换单位
         }
 
         //姿态解算
@@ -65,11 +64,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         safe_time++;
         if (safe_time >= 100){
             ctrl_rc.armed = RC_ARMED_NO;
-            HAL_GPIO_WritePin(RGB_G_GPIO_Port,RGB_G_Pin,GPIO_PIN_RESET);
             safe_time = 100;
         }
 
-        DriverCmdSend(&ctrl_rc, &motorSpeed);
+       // DriverCmdSend(&ctrl_rc, &motorSpeed);
 
         //更新CTRL forward模式的时间
         ctrl_time += 10;
@@ -90,7 +88,7 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 
         //如果正常收到了串口指令，则安全计时会一直清零
         safe_time = 0;
-        HAL_GPIO_WritePin(RGB_G_GPIO_Port,RGB_G_Pin,GPIO_PIN_SET);
+        HAL_GPIO_WritePin(LED_GPIO_Port,LED_Pin,GPIO_PIN_SET);
         //重新打开DMA接收 idle中断
         HAL_UARTEx_ReceiveToIdle_DMA(&WIFI_UART, wifi_rx_buffer, sizeof(wifi_rx_buffer));
     }
@@ -105,33 +103,26 @@ void Main(void) {
 
     //陀螺仪自检
     HAL_Delay(1000);
-    imu_config = IMU_USE_NONE;
-    if (!icm20602_self_check()){
-        imu_config = IMU_USE_ICM20602;
-    } else if (!icm42688_self_check()){
+    if (!icm42688_self_check()){
         imu_config = IMU_USE_ICM42688P;
     }
 
     //陀螺仪初始化
-    if (imu_config == IMU_USE_ICM20602){
-        //init icm20602 and  calibrate
-        icm20602Init();
-        HAL_Delay(100);
-        ICM20602_Gyro_And_Acc_Calibrate(&gyro_drift, &acc_drift);
-    } else if(imu_config == IMU_USE_ICM42688P){
+    if(imu_config == IMU_USE_ICM42688P){
         icm42688Init();
         HAL_Delay(100);
-        ICM42688P_Gyro_And_Acc_Calibrate(&gyro_drift, &acc_drift);
+//        ICM42688P_Gyro_And_Acc_Calibrate(&gyro_drift, &acc_drift);
     }
 
     HAL_Delay(100);
     //初始化电机
-    Drive_Clear_Error(M0);
-    Drive_Clear_Error(M1);
-    Drive_Clear_Error(M2);
-    Drive_Init(M0);
-    Drive_Init(M1);
-    Drive_Init(M2);
+    //TODO:改成刘沐航写的
+//    Drive_Clear_Error(M0);
+//    Drive_Clear_Error(M1);
+//    Drive_Clear_Error(M2);
+//    Drive_Init(M0);
+//    Drive_Init(M1);
+//    Drive_Init(M2);
 
     //PID
     CtrlPIDInit();
@@ -158,13 +149,12 @@ void Main(void) {
 
         //-------------------------------------------------------------------------------------
 
-//        printf("%.3f,%.3f,%.3f\r\n", motorSpeed.m1, motorSpeed.m2, motorSpeed.m3);
+//        printf("%d,%d,%d,%d,%d,%d\r\n", acc_body.x, acc_body.y, acc_body.z, gyro_body.x, gyro_body.y, gyro_body.z);
         printf("%.3f,%.3f,%.3f\r\n", state_attitude_angle.roll, state_attitude_angle.pitch, state_attitude_angle.yaw);
-//        printf("%.3f,%.3f,%.3f,%.3f,%.3f,%.3f\r\n",gyro_f.x,gyro_f.y,gyro_f.z,acc_f.x,acc_f.y,acc_f.z);
 //        printf("Hello World!\r\n");
 
         //Blink
-        HAL_GPIO_TogglePin(RGB_B_GPIO_Port,RGB_B_Pin);
+        HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
         //-----------------------------Delay
         HAL_Delay(100);
     }
