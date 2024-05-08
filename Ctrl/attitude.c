@@ -158,7 +158,7 @@ void AttitudeQuaternionToEulerAngle(const float _q[4], attitude_t* _attitude){
     _attitude->yaw = atan2_approx(siny_cosp, cosy_cosp);
 }
 
-//这个是从芯片到模块的转换
+
 void AttitudeRadianToAngle(attitude_t* radian, attitude_t* angle){
 
     angle->roll = radian->roll * RAD2DEG;

@@ -16,13 +16,14 @@
 #define M2 0x003 //俯仰轴飞轮
 
 typedef union{
-    char data_ch[4];
-    float data_f;
+    uint8_t data_ch[2];
+    uint16_t data_16;
 }driver_data;
 
 
+void can_send_message(uint32_t id, uint8_t *buf,uint8_t len);
 void Drive_Init(uint32_t CAN_ID);
-void Driver_control(uint32_t CAN_ID, float target);
+void Driver_control(uint32_t CAN_ID, int16_t target);
 void Drive_Clear_Error(uint32_t CAN_ID);
 void DriverCmdSend(ctrl_rc_t* _rc, motorSpeed_t * _motor);
 

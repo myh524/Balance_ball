@@ -34,7 +34,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         //读取角速度和加速度
         if(imu_config == IMU_USE_ICM42688P){
             icm42688AccAndGyroRead(&acc_raw, &gyro_raw);
-            ImuTransformer(&acc_raw, &acc, &gyro_raw, &gyro);      ///对比用的，别忘了改
+            ImuTransformer(&acc_raw, &acc, &gyro_raw, &gyro);
 
             CoordinateRotation(&acc, &gyro, &acc_body, &gyro_body);
 
@@ -50,14 +50,21 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         // 转换单位
         AttitudeRadianToAngle(&state_attitude,&state_attitude_angle);
 
+        //暂时写的，不用遥控了
+        ctrl_rc.roll = state_attitude.roll;
+        ctrl_rc.pitch = state_attitude.pitch;
+        ctrl_rc.yaw = state_attitude.yaw;
+
         //PID控制更新
         //更新当前姿态和目标姿态
         ////注意！！！在这里用的是弧度制
-        CtrlStateUpdate(&gyro_f,&state_attitude,&ctrl_state);
-        CtrlSetpointUpdate(&ctrl_rc, &ctrl_setpoint);
-        //更新姿态控制pid
-        CtrlUpdate(&ctrl_rc, &ctrl_state, &ctrl_setpoint, &ctrl_out);
+        //TODO:PID还没写呢
+//        CtrlStateUpdate(&gyro_f,&state_attitude,&ctrl_state);
+//        CtrlSetpointUpdate(&ctrl_rc, &ctrl_setpoint);
+//        //更新姿态控制pid
+//        CtrlUpdate(&ctrl_rc, &ctrl_state, &ctrl_setpoint, &ctrl_out);
         //更新飞轮转速到驱动板
+        //TODO：这个函数现在是极简版
         DriverSpeedUpdate(&ctrl_rc, &ctrl_out,&ctrl_out_sum, &motorSpeed);
 
         //添加安全保护，如果一定时间内没有收到串口的数据，则停车
@@ -67,7 +74,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
             safe_time = 100;
         }
 
-       // DriverCmdSend(&ctrl_rc, &motorSpeed);
+        DriverCmdSend(&ctrl_rc, &motorSpeed);
 
         //更新CTRL forward模式的时间
         ctrl_time += 10;
@@ -88,7 +95,14 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 
         //如果正常收到了串口指令，则安全计时会一直清零
         safe_time = 0;
-        HAL_GPIO_WritePin(LED_GPIO_Port,LED_Pin,GPIO_PIN_SET);
+
+
+        if (ctrl_time >= 500){
+            HAL_GPIO_WritePin(LED_GPIO_Port,LED_Pin,GPIO_PIN_RESET);
+        } else{
+            HAL_GPIO_WritePin(LED_GPIO_Port,LED_Pin,GPIO_PIN_SET);
+        }
+
         //重新打开DMA接收 idle中断
         HAL_UARTEx_ReceiveToIdle_DMA(&WIFI_UART, wifi_rx_buffer, sizeof(wifi_rx_buffer));
     }
@@ -150,11 +164,12 @@ void Main(void) {
         //-------------------------------------------------------------------------------------
 
 //        printf("%d,%d,%d,%d,%d,%d\r\n", acc_body.x, acc_body.y, acc_body.z, gyro_body.x, gyro_body.y, gyro_body.z);
-        printf("%.3f,%.3f,%.3f\r\n", state_attitude_angle.roll, state_attitude_angle.pitch, state_attitude_angle.yaw);
+//        printf("%.3f,%.3f,%.3f\r\n", state_attitude_angle.roll, state_attitude_angle.pitch, state_attitude_angle.yaw);
+        printf("%.3f,%.3f,%.3f\r\n", motorSpeed.m1, motorSpeed.m2, motorSpeed.m3);
 //        printf("Hello World!\r\n");
 
         //Blink
-        HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
+//        HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
         //-----------------------------Delay
         HAL_Delay(100);
     }

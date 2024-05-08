@@ -296,6 +296,7 @@ void ICM42688P_Gyro_And_Acc_Calibrate(Axis3i16* _gyro_drift, Axis3i16* _acc_drif
     _acc_drift->z = (int16_t) (_sum_acc.z / CALIBRATION_SAMPLES);
 }
 
+//这一步是从芯片到陀螺仪模块
 void ImuTransformer(Axis3i16* _acc_raw, Axis3i16* _acc,Axis3i16* _gyro_raw, Axis3i16* _gyro)
 {
 
