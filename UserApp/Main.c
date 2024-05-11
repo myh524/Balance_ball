@@ -51,9 +51,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         AttitudeRadianToAngle(&state_attitude,&state_attitude_angle);
 
         //暂时写的，不用遥控了
-        ctrl_rc.roll = state_attitude.roll;
-        ctrl_rc.pitch = state_attitude.pitch;
-        ctrl_rc.yaw = state_attitude.yaw;
+//        ctrl_rc.roll = state_attitude.roll;
+//        ctrl_rc.pitch = state_attitude.pitch;
+//        ctrl_rc.yaw = state_attitude.yaw;
 
         //PID控制更新
         //更新当前姿态和目标姿态

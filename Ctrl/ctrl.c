@@ -170,7 +170,7 @@ void DriverSpeedUpdate(const ctrl_rc_t* _rc, const ctrl_out_t* _out, ctrl_out_t*
             {-0.4082483f, 0.7071068f, -0.5773503f},
             {-0.4082483f, -0.7071068f, -0.5773503f}};
 
-    float K = 30.0f;
+    float K = 5.0f;
 
     _motor->m1 = K * (speedMatrix[0][0] * -_rc->roll + speedMatrix[0][1] * _rc->pitch + speedMatrix[0][2] * _rc->yaw);
     _motor->m2 = K * (speedMatrix[1][0] * -_rc->roll + speedMatrix[1][1] * _rc->pitch + speedMatrix[1][2] * _rc->yaw);
