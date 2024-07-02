@@ -53,6 +53,7 @@ void MX_CAN_Init(void)
   {
     Error_Handler();
   }
+
   /* USER CODE BEGIN CAN_Init 2 */
     HAL_CAN_MspInit(&hcan);
     HAL_CAN_Start(&hcan);

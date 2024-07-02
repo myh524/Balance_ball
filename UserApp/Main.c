@@ -97,11 +97,11 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
         safe_time = 0;
 
 
-        if (ctrl_time >= 500){
-            HAL_GPIO_WritePin(LED_GPIO_Port,LED_Pin,GPIO_PIN_RESET);
-        } else{
-            HAL_GPIO_WritePin(LED_GPIO_Port,LED_Pin,GPIO_PIN_SET);
-        }
+//        if (ctrl_time >= 500){
+//            HAL_GPIO_WritePin(LED0_GPIO_Port,LED0_Pin,GPIO_PIN_RESET);
+//        } else{
+//            HAL_GPIO_WritePin(LED0_GPIO_Port,LED0_Pin,GPIO_PIN_SET);
+//        }
 
         //重新打开DMA接收 idle中断
         HAL_UARTEx_ReceiveToIdle_DMA(&WIFI_UART, wifi_rx_buffer, sizeof(wifi_rx_buffer));
@@ -110,6 +110,7 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 
 /* Default Entry -------------------------------------------------------*/
 void Main(void) {
+
     //！！！
     //NOTE:注意！！！printf已经重定向到WIFI，gh 3p 的那个串口目前没用
     //！！！
@@ -145,7 +146,7 @@ void Main(void) {
     HAL_UARTEx_ReceiveToIdle_DMA(&WIFI_UART, wifi_rx_buffer, sizeof(wifi_rx_buffer));
 
     //启动定时器
-    HAL_TIM_Base_Start_IT(&htim3);
+//    HAL_TIM_Base_Start_IT(&htim3);
 
     while (1){
 
@@ -169,7 +170,8 @@ void Main(void) {
 //        printf("Hello World!\r\n");
 
         //Blink
-//        HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
+        HAL_GPIO_TogglePin(LED1_GPIO_Port,LED1_Pin);
+        HAL_GPIO_TogglePin(LED0_GPIO_Port,LED0_Pin);
         //-----------------------------Delay
         HAL_Delay(100);
     }
