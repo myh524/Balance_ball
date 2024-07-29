@@ -164,7 +164,7 @@ void CtrlUpdate(const ctrl_rc_t* _rc, const ctrl_state_t* _state, ctrl_setpoint_
 ////---------------------------------------------about-motor-speed-------------------------------------------
 void DriverSpeedUpdate(const ctrl_rc_t* _rc, const ctrl_out_t* _out, ctrl_out_t* _out_sum, motorSpeed_t* _motor) {
 
-    //转速分配矩阵
+    //转速分配矩阵  由于角动量守恒反作用原理，整个矩阵都乘以 -1
     const static float speedMatrix[3][3]={
             {0.8164966f, 0.0f, -0.5773503f},
             {-0.4082483f, 0.7071068f, -0.5773503f},
@@ -172,9 +172,9 @@ void DriverSpeedUpdate(const ctrl_rc_t* _rc, const ctrl_out_t* _out, ctrl_out_t*
 
     float K = 5.0f;
 
-    _motor->m1 = K * (speedMatrix[0][0] * -_rc->roll + speedMatrix[0][1] * _rc->pitch + speedMatrix[0][2] * _rc->yaw);
-    _motor->m2 = K * (speedMatrix[1][0] * -_rc->roll + speedMatrix[1][1] * _rc->pitch + speedMatrix[1][2] * _rc->yaw);
-    _motor->m3 = K * (speedMatrix[2][0] * -_rc->roll + speedMatrix[2][1] * _rc->pitch + speedMatrix[2][2] * _rc->yaw);
+    _motor->m1 = K * (speedMatrix[0][0] * _rc->roll + speedMatrix[0][1] * _rc->pitch + speedMatrix[0][2] * _rc->yaw);
+    _motor->m2 = K * (speedMatrix[1][0] * _rc->roll + speedMatrix[1][1] * _rc->pitch + speedMatrix[1][2] * _rc->yaw);
+    _motor->m3 = K * (speedMatrix[2][0] * _rc->roll + speedMatrix[2][1] * _rc->pitch + speedMatrix[2][2] * _rc->yaw);
 
 
 //    //先判断是否解锁
