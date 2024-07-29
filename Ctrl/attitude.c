@@ -167,17 +167,15 @@ void AttitudeRadianToAngle(attitude_t* radian, attitude_t* angle){
 }
 
 void CoordinateRotation(Axis3i16* _acc, Axis3i16* _gyro, Axis3i16* _acc_body, Axis3i16* _gyro_body){
-    //C =
-    //        -0.408248290463863    -0.408248290463863  0.816496580927726
-    //        -0.707106781186548     0.707106781186547  -1.11022302462516e-16
-    //        -0.577350269189626    -0.577350269189626  -0.577350269189626
-    _acc_body->x=- 0.408248290463863*_acc->x - 0.408248290463863*_acc->y + 0.816496580927726*_acc->z;
-    _acc_body->y=- 0.707106781186548*_acc->x + 0.707106781186547*_acc->y - 1.11022302462516e-16*_acc->z;
-    _acc_body->z=- 0.577350269189626*_acc->x - 0.577350269189626*_acc->y - 0.577350269189626*_acc->z;
+    double CoordinateMat[3][3] =
+    {-0.408248290463863,    -0.408248290463863,  0.816496580927726,
+     -0.707106781186548,     0.707106781186547,  0,
+     -0.577350269189626,    -0.577350269189626,  -0.577350269189626};
+    _acc_body->x = CoordinateMat[0][0] * _acc->x + CoordinateMat[0][1] * _acc->y + CoordinateMat[0][2] * _acc->z;
+    _acc_body->y = CoordinateMat[1][0] * _acc->x + CoordinateMat[1][1] * _acc->y + CoordinateMat[1][2] * _acc->z;
+    _acc_body->z = CoordinateMat[2][0] * _acc->x + CoordinateMat[2][1] * _acc->y + CoordinateMat[2][2] * _acc->z;
 
-    _gyro_body->x=-0.408248290463863 * _gyro->x-0.408248290463863 * _gyro->y + 0.816496580927726 *_gyro->z;
-    _gyro_body->y=-0.707106781186548 * _gyro->x+0.707106781186547 * _gyro->y - 1.11022302462516e-16*_gyro->z;
-    _gyro_body->z=-0.577350269189626 * _gyro->x-0.577350269189626 * _gyro->y - 0.577350269189626*_gyro->z;
-
-
+    _gyro_body->x = CoordinateMat[0][0] * _gyro->x + CoordinateMat[0][1] * _gyro->y + CoordinateMat[0][2] * _gyro->z;
+    _gyro_body->y = CoordinateMat[1][0] * _gyro->x + CoordinateMat[1][1] * _gyro->y + CoordinateMat[1][2] * _gyro->z;
+    _gyro_body->z = CoordinateMat[2][0] * _gyro->x + CoordinateMat[2][1] * _gyro->y + CoordinateMat[2][2] * _gyro->z;
 }

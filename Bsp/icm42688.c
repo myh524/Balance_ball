@@ -268,32 +268,35 @@ void ICM42688P_Gyro_And_Acc_Calibrate(Axis3i16* _gyro_drift, Axis3i16* _acc_drif
     Axis3i16 _gyro = {0,0,0};
     Axis3i16 _acc = {0,0,0};
 
+    Axis3i16 _gyro_body = {0,0,0};
+    Axis3i16 _acc_body = {0,0,0};
+
     //为了防止越界，这个数据类型整的大点
-    Axis3i64 _sum_gyro = {0,0,0};
-    Axis3i64 _sum_acc = {0,0,0};
+    Axis3i64 _sum_gyro_body = {0,0,0};
+    Axis3i64 _sum_acc_body = {0,0,0};
 
     for (int i = 0; i < CALIBRATION_SAMPLES; ++i) {
         icm42688AccAndGyroRead(&_acc, &_gyro);
 
-        CoordinateRotation(&acc, &gyro, &acc_body, &gyro_body);
+        CoordinateRotation(&_acc, &_gyro, &_acc_body, &_gyro_body);
 
-        _sum_gyro.x += _gyro.x;
-        _sum_gyro.y += _gyro.y;
-        _sum_gyro.z += _gyro.z;
+        _sum_gyro_body.x += _gyro_body.x;
+        _sum_gyro_body.y += _gyro_body.y;
+        _sum_gyro_body.z += _gyro_body.z;
 
-        _sum_acc.x +=_acc.x;
-        _sum_acc.y +=_acc.y;
-        _sum_acc.z +=_acc.z;
+        _sum_acc_body.x +=_acc_body.x;
+        _sum_acc_body.y +=_acc_body.y;
+        _sum_acc_body.z +=_acc_body.z;
 
         HAL_Delay(1);
     }
-    _gyro_drift->x = (int16_t) (_sum_gyro.x / CALIBRATION_SAMPLES);
-    _gyro_drift->y = (int16_t) (_sum_gyro.y / CALIBRATION_SAMPLES);
-    _gyro_drift->z = (int16_t) (_sum_gyro.z / CALIBRATION_SAMPLES);
+    _gyro_drift->x = (int16_t) (_sum_gyro_body.x / CALIBRATION_SAMPLES);
+    _gyro_drift->y = (int16_t) (_sum_gyro_body.y / CALIBRATION_SAMPLES);
+    _gyro_drift->z = (int16_t) (_sum_gyro_body.z / CALIBRATION_SAMPLES);
 
-    _acc_drift->x = (int16_t) (_sum_acc.x / CALIBRATION_SAMPLES);
-    _acc_drift->y = (int16_t) (_sum_acc.y / CALIBRATION_SAMPLES);
-    _acc_drift->z = (int16_t) (_sum_acc.z / CALIBRATION_SAMPLES);
+    _acc_drift->x = (int16_t) (_sum_acc_body.x / CALIBRATION_SAMPLES);
+    _acc_drift->y = (int16_t) (_sum_acc_body.y / CALIBRATION_SAMPLES);
+    _acc_drift->z = (int16_t) (_sum_acc_body.z / CALIBRATION_SAMPLES);
 }
 
 //这一步是从芯片到陀螺仪模块
