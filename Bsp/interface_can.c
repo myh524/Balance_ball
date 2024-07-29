@@ -88,18 +88,18 @@ void Drive_Clear_Error(uint32_t CAN_ID)
 void DriverCmdSend(ctrl_rc_t* _rc, motorSpeed_t * _motor){
     //再次检测是否解锁
     //这里因为可能没收到ibus信息，故不能检测到no就return
-//    if(_rc->armed == RC_ARMED_YES){
+    if(_rc->armed == RC_ARMED_YES){
         //输出三个转轴的转速
         Driver_control(M0,(int16_t)_motor->m1);
         Driver_control(M1,(int16_t)_motor->m2);
         Driver_control(M2,(int16_t)_motor->m3);
-//    } else {
-//        //输出三个转轴的转速
-//        Driver_control(M0,0.0f);
-//        Driver_control(M1,0.0f);
-//        Driver_control(M2,0.0f);
-//
-//    }
+    } else {
+        //输出三个转轴的转速
+        Driver_control(M0,0);
+        Driver_control(M1,0);
+        Driver_control(M2,0);
+
+    }
 
 
 }

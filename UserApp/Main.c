@@ -50,11 +50,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         // 转换单位
         AttitudeRadianToAngle(&state_attitude,&state_attitude_angle);
 
-        //暂时写的，不用遥控了
-//        ctrl_rc.roll = state_attitude.roll;
-//        ctrl_rc.pitch = state_attitude.pitch;
-//        ctrl_rc.yaw = state_attitude.yaw;
-
         //PID控制更新
         //更新当前姿态和目标姿态
         ////注意！！！在这里用的是弧度制
@@ -97,11 +92,11 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
         safe_time = 0;
 
 
-//        if (ctrl_time >= 500){
-//            HAL_GPIO_WritePin(LED0_GPIO_Port,LED0_Pin,GPIO_PIN_RESET);
-//        } else{
-//            HAL_GPIO_WritePin(LED0_GPIO_Port,LED0_Pin,GPIO_PIN_SET);
-//        }
+        if (ctrl_time >= 500){
+            HAL_GPIO_WritePin(LED0_GPIO_Port,LED0_Pin,GPIO_PIN_RESET);
+        } else{
+            HAL_GPIO_WritePin(LED0_GPIO_Port,LED0_Pin,GPIO_PIN_SET);
+        }
 
         //重新打开DMA接收 idle中断
         HAL_UARTEx_ReceiveToIdle_DMA(&WIFI_UART, wifi_rx_buffer, sizeof(wifi_rx_buffer));
@@ -130,14 +125,8 @@ void Main(void) {
     }
 
     HAL_Delay(100);
-    //初始化电机
-    //TODO:改成刘沐航写的
-//    Drive_Clear_Error(M0);
-//    Drive_Clear_Error(M1);
-//    Drive_Clear_Error(M2);
-//    Drive_Init(M0);
-//    Drive_Init(M1);
-//    Drive_Init(M2);
+
+    //改成步进电机后不需要初始化电机
 
     //PID
     CtrlPIDInit();

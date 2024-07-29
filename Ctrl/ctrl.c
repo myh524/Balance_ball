@@ -106,7 +106,6 @@ void CtrlUpdate(const ctrl_rc_t* _rc, const ctrl_state_t* _state, ctrl_setpoint_
             _out->roll =  PID_calc(&rollRate_pid, _state->attitudeRate.roll, _setpoint->attitudeRate.roll);
             _out->pitch = PID_calc(&pitchRate_pid, _state->attitudeRate.pitch, _setpoint->attitudeRate.pitch);
             _out->yaw = PID_calc(&yawRate_pid, _state->attitudeRate.yaw, _setpoint->attitudeRate.yaw);
-
         }
         else if(_rc->mode == RC_MODE_POSITION) //定姿模式
         {
@@ -170,77 +169,75 @@ void DriverSpeedUpdate(const ctrl_rc_t* _rc, const ctrl_out_t* _out, ctrl_out_t*
             {-0.4082483f, 0.7071068f, -0.5773503f},
             {-0.4082483f, -0.7071068f, -0.5773503f}};
 
-    float K = 5.0f;
-
-    _motor->m1 = K * (speedMatrix[0][0] * _rc->roll + speedMatrix[0][1] * _rc->pitch + speedMatrix[0][2] * _rc->yaw);
-    _motor->m2 = K * (speedMatrix[1][0] * _rc->roll + speedMatrix[1][1] * _rc->pitch + speedMatrix[1][2] * _rc->yaw);
-    _motor->m3 = K * (speedMatrix[2][0] * _rc->roll + speedMatrix[2][1] * _rc->pitch + speedMatrix[2][2] * _rc->yaw);
 
 
-//    //先判断是否解锁
-//    if(_rc->armed == RC_ARMED_YES){
+
+    //先判断是否解锁
+    if(_rc->armed == RC_ARMED_YES){
+
+        if(_rc->mode == RC_MODE_STABILIZED
+        || _rc->mode == RC_MODE_POSITION ) //自稳模式 定点模式
+        {
+            float K = 5.0f;
+
+            _motor->m1 = K * (speedMatrix[0][0] * _rc->roll + speedMatrix[0][1] * _rc->pitch + speedMatrix[0][2] * _rc->yaw);
+            _motor->m2 = K * (speedMatrix[1][0] * _rc->roll + speedMatrix[1][1] * _rc->pitch + speedMatrix[1][2] * _rc->yaw);
+            _motor->m3 = K * (speedMatrix[2][0] * _rc->roll + speedMatrix[2][1] * _rc->pitch + speedMatrix[2][2] * _rc->yaw);
+
+        }
+        else if(_rc->mode == RC_MODE_DEV){ //开发者模式
+
+            //如果在死区，就消旋
+            // 注意这里是"+="
+//            if( fabsf( _out->roll ) < damp_deadzone ){
+//                _out_sum->roll += (_out_sum->roll > 0) ? -damp_vel : damp_vel;
+//            } else{
+//                _out_sum->roll += _out->roll;
+//            }
 //
-//        if(_rc->mode == RC_MODE_STABILIZED
-//        || _rc->mode == RC_MODE_POSITION ) //自稳模式 定点模式
-//        {
-//            _motor->m1 = speedMatrix[0][0] * -_out->roll + speedMatrix[0][1] * _out->pitch + speedMatrix[0][2] * _out->yaw;
-//            _motor->m2 = speedMatrix[1][0] * -_out->roll + speedMatrix[1][1] * _out->pitch + speedMatrix[1][2] * _out->yaw;
-//            _motor->m3 = speedMatrix[2][0] * -_out->roll + speedMatrix[2][1] * _out->pitch + speedMatrix[2][2] * _out->yaw;
+//            if( fabsf( _out->pitch ) < damp_deadzone ){
+//                _out_sum->pitch += (_out_sum->pitch > 0) ? -damp_vel : damp_vel;
+//            } else{
+//                _out_sum->pitch += _out->pitch;
+//            }
 //
-//        }
-//        else if(_rc->mode == RC_MODE_DEV){ //开发者模式
-//
-//            //如果在死区，就消旋
-//            // 注意这里是"+="
-////            if( fabsf( _out->roll ) < damp_deadzone ){
-////                _out_sum->roll += (_out_sum->roll > 0) ? -damp_vel : damp_vel;
-////            } else{
-////                _out_sum->roll += _out->roll;
-////            }
-////
-////            if( fabsf( _out->pitch ) < damp_deadzone ){
-////                _out_sum->pitch += (_out_sum->pitch > 0) ? -damp_vel : damp_vel;
-////            } else{
-////                _out_sum->pitch += _out->pitch;
-////            }
-////
-////            if( fabsf( _out->yaw ) < damp_deadzone ){
-////                _out_sum->yaw += (_out_sum->yaw > 0) ? -damp_vel : damp_vel;
-////            } else{
-////                _out_sum->yaw += _out->yaw;
-////            }
-//
-//            _out_sum->roll += _out->roll;
-//            _out_sum->pitch += _out->pitch;
-//            _out_sum->yaw += _out->yaw;
-//
-//            //限幅
-//            _out_sum->roll = constrainf(_out_sum->roll,-80.0f,80.0f);
-//            _out_sum->pitch = constrainf(_out_sum->pitch,-80.0f,80.0f);
-//            _out_sum->yaw = constrainf(_out_sum->yaw,-80.0f,80.0f);
-//
-//            _motor->m1 = speedMatrix[0][0] * -_out_sum->roll + speedMatrix[0][1] * _out_sum->pitch + speedMatrix[0][2] * _out_sum->yaw;
-//            _motor->m2 = speedMatrix[1][0] * -_out_sum->roll + speedMatrix[1][1] * _out_sum->pitch + speedMatrix[1][2] * _out_sum->yaw;
-//            _motor->m3 = speedMatrix[2][0] * -_out_sum->roll + speedMatrix[2][1] * _out_sum->pitch + speedMatrix[2][2] * _out_sum->yaw;
-//
-//        }
-//        else
-//        {
-//            _motor->m1 = 0.0f;
-//            _motor->m2 = 0.0f;
-//            _motor->m3 = 0.0f;
-//        }
-//
-//    }
-//    else {
-//        //没解锁
-//        _motor->m1 = 0.0f;
-//        _motor->m2 = 0.0f;
-//        _motor->m3 = 0.0f;
-//    }
-//
-//    //限幅
-//    _motor->m1 = constrainf(_motor->m1,-100.0f,100.0f);
-//    _motor->m2 = constrainf(_motor->m2,-100.0f,100.0f);
-//    _motor->m3 = constrainf(_motor->m3,-100.0f,100.0f);
+//            if( fabsf( _out->yaw ) < damp_deadzone ){
+//                _out_sum->yaw += (_out_sum->yaw > 0) ? -damp_vel : damp_vel;
+//            } else{
+//                _out_sum->yaw += _out->yaw;
+//            }
+
+            _out_sum->roll += _out->roll;
+            _out_sum->pitch += _out->pitch;
+            _out_sum->yaw += _out->yaw;
+
+            //限幅
+            _out_sum->roll = constrainf(_out_sum->roll,-80.0f,80.0f);
+            _out_sum->pitch = constrainf(_out_sum->pitch,-80.0f,80.0f);
+            _out_sum->yaw = constrainf(_out_sum->yaw,-80.0f,80.0f);
+
+            _motor->m1 = speedMatrix[0][0] * -_out_sum->roll + speedMatrix[0][1] * _out_sum->pitch + speedMatrix[0][2] * _out_sum->yaw;
+            _motor->m2 = speedMatrix[1][0] * -_out_sum->roll + speedMatrix[1][1] * _out_sum->pitch + speedMatrix[1][2] * _out_sum->yaw;
+            _motor->m3 = speedMatrix[2][0] * -_out_sum->roll + speedMatrix[2][1] * _out_sum->pitch + speedMatrix[2][2] * _out_sum->yaw;
+
+        }
+        else
+        {
+            _motor->m1 = 0.0f;
+            _motor->m2 = 0.0f;
+            _motor->m3 = 0.0f;
+        }
+
+    }
+    else {
+        //没解锁
+        _motor->m1 = 0.0f;
+        _motor->m2 = 0.0f;
+        _motor->m3 = 0.0f;
+    }
+
+    //限幅
+    _motor->m1 = constrainf(_motor->m1,-100.0f,100.0f);
+    _motor->m2 = constrainf(_motor->m2,-100.0f,100.0f);
+    _motor->m3 = constrainf(_motor->m3,-100.0f,100.0f);
 }
