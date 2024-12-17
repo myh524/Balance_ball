@@ -37,13 +37,15 @@ float damp_deadzone = 10.0f;
 void CtrlPIDInit(void){
     //初始化PID
     //外环 注意现在是弧度值
-    PID_init(&roll_pid, PID_POSITION, 5.0f,0,0, 100,0);
-    PID_init(&pitch_pid, PID_POSITION, 5.0f,0,0, 100,0);
-    PID_init(&yaw_pid, PID_POSITION, 5.0f,0,0, 100,0);
-    //内环 不要d，因为角速度本来就很抖
-    PID_init(&rollRate_pid, PID_POSITION, 20.0f,0,0, 100,0);
-    PID_init(&pitchRate_pid, PID_POSITION, 20.0f,0,0, 100,0);
-    PID_init(&yawRate_pid, PID_POSITION, 20.0f,0,0, 100,0);
+    PID_init(&roll_pid, PID_POSITION, 2.0f,0,0, 100,0);
+    PID_init(&pitch_pid, PID_POSITION, 2.0f,0,0, 100,0);
+    PID_init(&yaw_pid, PID_POSITION, 2.0f,0,0, 100,0);
+
+    //TODO:暂时没用内环
+//    //内环 不要d，因为角速度本来就很抖
+//    PID_init(&rollRate_pid, PID_POSITION, 20.0f,0,0, 100,0);
+//    PID_init(&pitchRate_pid, PID_POSITION, 20.0f,0,0, 100,0);
+//    PID_init(&yawRate_pid, PID_POSITION, 20.0f,0,0, 100,0);
 }
 
 void CtrlStateUpdate(const Axis3f* _gyro_f, const attitude_t* _attitude, ctrl_state_t* _state){
@@ -64,23 +66,21 @@ void CtrlSetpointUpdate(const ctrl_rc_t* _rc, ctrl_setpoint_t* _setpoint){
     // 通过rc获得期望值，存在setpoint里
     if(_rc->mode == RC_MODE_STABILIZED) //自稳模式
     {
-        //期望角速度
-        _setpoint->attitudeRate.roll = 0;
-        _setpoint->attitudeRate.pitch = 0;
-        _setpoint->attitudeRate.yaw = 0;
+        //期望角度
+        _setpoint->attitude.roll = 0;
+        _setpoint->attitude.pitch = 0;
+        _setpoint->attitude.yaw = 0;
     }
-    else if(_rc->mode == RC_MODE_POSITION) //定姿模式
+    else if(_rc->mode == RC_MODE_TORQUE) //定姿模式
     {
         // 期望角度
-        _setpoint->attitude.roll = _rc->roll;
-        _setpoint->attitude.pitch = _rc->pitch;
-        _setpoint->attitude.yaw = _rc->yaw;
+        _setpoint->torque.roll = _rc->roll;
+        _setpoint->torque.pitch = _rc->pitch;
+        _setpoint->torque.yaw = _rc->yaw;
     }
-    else if(_rc->mode == RC_MODE_DEV) //开环前向模式
+    else if(_rc->mode == RC_MODE_DEV) //TODO:新模式
     {
-        _setpoint->attitude.roll = _rc->roll;
-        _setpoint->attitude.pitch = _rc->pitch;
-        _setpoint->attitude.yaw = _rc->yaw;
+        //TODO:新模式
     }
     else
     {
@@ -91,6 +91,9 @@ void CtrlSetpointUpdate(const ctrl_rc_t* _rc, ctrl_setpoint_t* _setpoint){
         _setpoint->attitudeRate.roll = 0;
         _setpoint->attitudeRate.pitch = 0;
         _setpoint->attitudeRate.yaw = 0;
+        _setpoint->torque.roll = 0;
+        _setpoint->torque.pitch = 0;
+        _setpoint->torque.yaw = 0;
     }
 
 }
@@ -102,44 +105,40 @@ void CtrlUpdate(const ctrl_rc_t* _rc, const ctrl_state_t* _state, ctrl_setpoint_
 
         if(_rc->mode == RC_MODE_STABILIZED) //自稳模式
         {
-            //只算内环角速度环
-            _out->roll =  PID_calc(&rollRate_pid, _state->attitudeRate.roll, _setpoint->attitudeRate.roll);
-            _out->pitch = PID_calc(&pitchRate_pid, _state->attitudeRate.pitch, _setpoint->attitudeRate.pitch);
-            _out->yaw = PID_calc(&yawRate_pid, _state->attitudeRate.yaw, _setpoint->attitudeRate.yaw);
+            //角度环
+            _out->roll =  PID_calc(&roll_pid, _state->attitude.roll, _setpoint->attitude.roll);
+            _out->pitch = PID_calc(&pitch_pid, _state->attitude.pitch, _setpoint->attitude.pitch);
+            _out->yaw = PID_calc(&yaw_pid, _state->attitude.yaw, _setpoint->attitude.yaw);
         }
-        else if(_rc->mode == RC_MODE_POSITION) //定姿模式
+        else if(_rc->mode == RC_MODE_TORQUE) //开环力矩模式
         {
-            //连PID都没有
-            _out->roll =  _setpoint->attitude.roll;
-            _out->pitch = _setpoint->attitude.pitch;
-            _out->yaw =  _setpoint->attitude.yaw;
-
-            _out->roll = scaleRangef(_out->roll, -1, 1, -30, 30);
-            _out->pitch = scaleRangef(_out->pitch, -1, 1, -30, 30);
-            _out->yaw = scaleRangef(_out->yaw, -1, 1, -30, 30);
+            //开环力矩模式现在为直传
+            _out->roll =  _setpoint->torque.roll;
+            _out->pitch = _setpoint->torque.pitch;
+            _out->yaw =  _setpoint->torque.yaw;
 
         }
-        else if(_rc->mode == RC_MODE_DEV) //开发者模式
+        else if(_rc->mode == RC_MODE_DEV) //TODO：新模式
         {
-            if( fabsf(_state->attitude.roll - _setpoint->attitude.roll) <= 0.1){ //弧度值
-                _setpoint->attitude.roll = _state->attitude.roll;
-            }
-            if( fabsf(_state->attitude.pitch - _setpoint->attitude.pitch) <= 0.1){
-                _setpoint->attitude.pitch = _state->attitude.pitch;
-            }
-            if( fabsf(_state->attitude.yaw - _setpoint->attitude.yaw) <= 0.1){
-                _setpoint->attitude.yaw = _state->attitude.yaw;
-            }
-
-            ////------------------------------------------普通串级环-----------------------------------------------------////
-            //先算外环pid
-            _setpoint->attitudeRate.roll = PID_calc(&roll_pid, _state->attitude.roll, _setpoint->attitude.roll);
-            _setpoint->attitudeRate.pitch = PID_calc(&pitch_pid, _state->attitude.pitch, _setpoint->attitude.pitch);
-            _setpoint->attitudeRate.yaw = PID_calc(&yaw_pid, _state->attitude.yaw, _setpoint->attitude.yaw);
-            //再算内环pid
-            _out->roll =  PID_calc(&rollRate_pid, _state->attitudeRate.roll, _setpoint->attitudeRate.roll);
-            _out->pitch = PID_calc(&pitchRate_pid, _state->attitudeRate.pitch, _setpoint->attitudeRate.pitch);
-            _out->yaw = PID_calc(&yawRate_pid, _state->attitudeRate.yaw, _setpoint->attitudeRate.yaw);
+//            if( fabsf(_state->attitude.roll - _setpoint->attitude.roll) <= 0.1){ //弧度值
+//                _setpoint->attitude.roll = _state->attitude.roll;
+//            }
+//            if( fabsf(_state->attitude.pitch - _setpoint->attitude.pitch) <= 0.1){
+//                _setpoint->attitude.pitch = _state->attitude.pitch;
+//            }
+//            if( fabsf(_state->attitude.yaw - _setpoint->attitude.yaw) <= 0.1){
+//                _setpoint->attitude.yaw = _state->attitude.yaw;
+//            }
+//
+//            ////------------------------------------------普通串级环-----------------------------------------------------////
+//            //先算外环pid
+//            _setpoint->attitudeRate.roll = PID_calc(&roll_pid, _state->attitude.roll, _setpoint->attitude.roll);
+//            _setpoint->attitudeRate.pitch = PID_calc(&pitch_pid, _state->attitude.pitch, _setpoint->attitude.pitch);
+//            _setpoint->attitudeRate.yaw = PID_calc(&yaw_pid, _state->attitude.yaw, _setpoint->attitude.yaw);
+//            //再算内环pid
+//            _out->roll =  PID_calc(&rollRate_pid, _state->attitudeRate.roll, _setpoint->attitudeRate.roll);
+//            _out->pitch = PID_calc(&pitchRate_pid, _state->attitudeRate.pitch, _setpoint->attitudeRate.pitch);
+//            _out->yaw = PID_calc(&yawRate_pid, _state->attitudeRate.yaw, _setpoint->attitudeRate.yaw);
         }
         else
         {
@@ -169,23 +168,18 @@ void DriverSpeedUpdate(const ctrl_rc_t* _rc, const ctrl_out_t* _out, ctrl_out_t*
             {-0.4082483f, 0.7071068f, -0.5773503f},
             {-0.4082483f, -0.7071068f, -0.5773503f}};
 
-
-
-
     //先判断是否解锁
     if(_rc->armed == RC_ARMED_YES){
 
         if(_rc->mode == RC_MODE_STABILIZED
-        || _rc->mode == RC_MODE_POSITION ) //自稳模式 定点模式
+        || _rc->mode == RC_MODE_TORQUE ) //自稳模式 力矩模式
         {
             float K = 5.0f;
-
-            _motor->m1 = K * (speedMatrix[0][0] * _rc->roll + speedMatrix[0][1] * _rc->pitch + speedMatrix[0][2] * _rc->yaw);
-            _motor->m2 = K * (speedMatrix[1][0] * _rc->roll + speedMatrix[1][1] * _rc->pitch + speedMatrix[1][2] * _rc->yaw);
-            _motor->m3 = K * (speedMatrix[2][0] * _rc->roll + speedMatrix[2][1] * _rc->pitch + speedMatrix[2][2] * _rc->yaw);
-
+            _motor->m1 = K * (speedMatrix[0][0] * _out->roll + speedMatrix[0][1] * _out->pitch + speedMatrix[0][2] * _out->yaw);
+            _motor->m2 = K * (speedMatrix[1][0] * _out->roll + speedMatrix[1][1] * _out->pitch + speedMatrix[1][2] * _out->yaw);
+            _motor->m3 = K * (speedMatrix[2][0] * _out->roll + speedMatrix[2][1] * _out->pitch + speedMatrix[2][2] * _out->yaw);
         }
-        else if(_rc->mode == RC_MODE_DEV){ //开发者模式
+        else if(_rc->mode == RC_MODE_DEV){ //TODO：新模式待开发
 
             //如果在死区，就消旋
             // 注意这里是"+="
@@ -206,19 +200,6 @@ void DriverSpeedUpdate(const ctrl_rc_t* _rc, const ctrl_out_t* _out, ctrl_out_t*
 //            } else{
 //                _out_sum->yaw += _out->yaw;
 //            }
-
-            _out_sum->roll += _out->roll;
-            _out_sum->pitch += _out->pitch;
-            _out_sum->yaw += _out->yaw;
-
-            //限幅
-            _out_sum->roll = constrainf(_out_sum->roll,-80.0f,80.0f);
-            _out_sum->pitch = constrainf(_out_sum->pitch,-80.0f,80.0f);
-            _out_sum->yaw = constrainf(_out_sum->yaw,-80.0f,80.0f);
-
-            _motor->m1 = speedMatrix[0][0] * -_out_sum->roll + speedMatrix[0][1] * _out_sum->pitch + speedMatrix[0][2] * _out_sum->yaw;
-            _motor->m2 = speedMatrix[1][0] * -_out_sum->roll + speedMatrix[1][1] * _out_sum->pitch + speedMatrix[1][2] * _out_sum->yaw;
-            _motor->m3 = speedMatrix[2][0] * -_out_sum->roll + speedMatrix[2][1] * _out_sum->pitch + speedMatrix[2][2] * _out_sum->yaw;
 
         }
         else

@@ -52,7 +52,7 @@ typedef struct
     ctrl_mode_e yaw;
 } ctrl_mode_t;
 
-//当前飞行状态
+//当前状态
 typedef struct
 {
     attitude_t 	attitude;	    //当前姿态角度
@@ -62,13 +62,14 @@ typedef struct
     acc_t acc;				    //当前加速度
 } ctrl_state_t;
 
-//目标飞行状态
+//目标状态
 typedef struct
 {
     attitude_t attitude;		//目标姿态角度，单位rad
     attitude_t attitudeRate;	//目标姿态角速度，单位rad/s
     position_t position;        //目标位置，单位m
     velocity_t velocity;      	//目标速度，单位m/s
+    attitude_t torque;          //目标力矩，运行在开环力矩模式
     ctrl_mode_t ctrl_mode;      //控制模式         在这还挺合适的，之后写面向对象吧
     float thrust;               //油门，单位-1~1    在这还挺合适的，之后写面向对象吧
 } ctrl_setpoint_t;
@@ -102,7 +103,7 @@ typedef struct
 #define RC_CHANNLE_MODE     5
 
 #define RC_MODE_STABILIZED 1000
-#define RC_MODE_POSITION 1500
+#define RC_MODE_TORQUE 1500
 #define RC_MODE_DEV 2000
 
 #define RC_ARMED_NO  1000
