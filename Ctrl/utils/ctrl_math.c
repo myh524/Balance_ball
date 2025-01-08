@@ -69,6 +69,8 @@ float constrainf(float amt, float low, float high)
 
 #endif
 
+#include "stdint-gcc.h"
+
 
 float sin_approx(float x)
 {

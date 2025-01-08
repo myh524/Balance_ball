@@ -4,6 +4,7 @@
 
 #ifndef BALANCEBALL_SENSER_TYPES_H
 #define BALANCEBALL_SENSER_TYPES_H
+#include "stdint-gcc.h"
 
 typedef struct
 {

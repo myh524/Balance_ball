@@ -103,6 +103,25 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
     }
 }
 
+// CAN接收中断回调函数
+uint8_t rx_data[8];
+uint8_t rxCount = 1;
+CAN_RxHeaderTypeDef rxMessage;
+void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan)
+{
+    HAL_StatusTypeDef status;
+
+    //接收数据(只能获取8字节以内的单包数据)
+    HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO1, &rxMessage, rx_data);
+
+    // 获取返回数据长度
+    rxCount = rxMessage.DLC;
+
+    //回调函数中编写程序读取数据
+
+    HAL_CAN_ActivateNotification(hcan, CAN_IT_RX_FIFO1_MSG_PENDING);
+}
+
 /* Default Entry -------------------------------------------------------*/
 void Main(void) {
 
@@ -133,6 +152,9 @@ void Main(void) {
 
     //wifi 串口DMA空闲中断 enable
     HAL_UARTEx_ReceiveToIdle_DMA(&WIFI_UART, wifi_rx_buffer, sizeof(wifi_rx_buffer));
+
+    // 启动CAN接收中断
+    HAL_CAN_ActivateNotification(&hcan, CAN_IT_RX_FIFO1_MSG_PENDING);
 
     //启动定时器
     HAL_TIM_Base_Start_IT(&htim3);

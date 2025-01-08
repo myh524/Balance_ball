@@ -10,6 +10,7 @@ extern "C" {
 #endif
 
 #include "stdio.h"
+#include "stdint-gcc.h"
 
 typedef struct
 {

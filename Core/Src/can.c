@@ -53,8 +53,31 @@ void MX_CAN_Init(void)
   {
     Error_Handler();
   }
-
   /* USER CODE BEGIN CAN_Init 2 */
+
+    // 设置STM32的帧ID - 扩展帧格式 - 不过滤任何数据帧
+    __IO uint8_t id_o, im_o; __IO uint16_t id_l, id_h, im_l, im_h;
+    id_o = (0x00);
+    id_h = (uint16_t)((uint16_t)id_o >> 5);										 // 高3位
+    id_l = (uint16_t)((uint16_t)id_o << 11) | CAN_ID_EXT; // 低5位
+    im_o = (0x00);
+    im_h = (uint16_t)((uint16_t)im_o >> 5);
+    im_l = (uint16_t)((uint16_t)im_o << 11) | CAN_ID_EXT;
+    CAN_FilterTypeDef CAN_FilterInitStructure;
+    CAN_FilterInitStructure.FilterBank = 1;
+    CAN_FilterInitStructure.FilterMode = CAN_FILTERMODE_IDMASK;		// 掩码模式
+    CAN_FilterInitStructure.FilterScale = CAN_FILTERSCALE_32BIT;	// 32位过滤器位宽
+    CAN_FilterInitStructure.FilterIdHigh = id_h;
+    CAN_FilterInitStructure.FilterIdLow = id_l;
+    CAN_FilterInitStructure.FilterMaskIdHigh = im_h;
+    CAN_FilterInitStructure.FilterMaskIdLow = im_l;
+    CAN_FilterInitStructure.FilterFIFOAssignment = CAN_FILTER_FIFO1;
+    CAN_FilterInitStructure.FilterActivation = ENABLE;
+    if(HAL_CAN_ConfigFilter(&hcan,&CAN_FilterInitStructure) != HAL_OK)//初始化过滤器
+    {
+        Error_Handler();
+    }
+
     HAL_CAN_MspInit(&hcan);
     HAL_CAN_Start(&hcan);
   /* USER CODE END CAN_Init 2 */
@@ -90,6 +113,9 @@ void HAL_CAN_MspInit(CAN_HandleTypeDef* canHandle)
 
     __HAL_AFIO_REMAP_CAN1_2();
 
+    /* CAN1 interrupt Init */
+    HAL_NVIC_SetPriority(CAN1_RX1_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(CAN1_RX1_IRQn);
   /* USER CODE BEGIN CAN1_MspInit 1 */
 
   /* USER CODE END CAN1_MspInit 1 */
@@ -113,6 +139,8 @@ void HAL_CAN_MspDeInit(CAN_HandleTypeDef* canHandle)
     */
     HAL_GPIO_DeInit(GPIOB, GPIO_PIN_8|GPIO_PIN_9);
 
+    /* CAN1 interrupt Deinit */
+    HAL_NVIC_DisableIRQ(CAN1_RX1_IRQn);
   /* USER CODE BEGIN CAN1_MspDeInit 1 */
 
   /* USER CODE END CAN1_MspDeInit 1 */
