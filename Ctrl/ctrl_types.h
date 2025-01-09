@@ -89,7 +89,7 @@ typedef struct
     float m1;
     float m2;
     float m3;
-}motorSpeed_t;
+}motorCmd_t;
 
 
 
@@ -104,7 +104,7 @@ typedef struct
 
 #define RC_MODE_STABILIZED 1000
 #define RC_MODE_TORQUE 1500
-#define RC_MODE_DEV 2000
+#define RC_MODE_WALK 2000
 
 #define RC_ARMED_NO  1000
 #define RC_ARMED_YES 2000

@@ -510,21 +510,3 @@ void Driver_Torque_Control(uint32_t CAN_ID, float target)
                               65535, ABS(target), 0);
 }
 
-void DriverCmdSend(ctrl_rc_t* _rc, motorSpeed_t * _motor){
-    //再次检测是否解锁
-    //这里因为可能没收到ibus信息，故不能检测到no就return
-    if(_rc->armed == RC_ARMED_YES){
-        //输出三个转轴的转速
-        Driver_Velocity_Control(M1,_motor->m1);
-        Driver_Velocity_Control(M2,_motor->m2);
-        Driver_Velocity_Control(M3,_motor->m3);
-    } else {
-        //输出三个转轴的转速
-        Driver_Velocity_Control(M1,0);
-        Driver_Velocity_Control(M2,0);
-        Driver_Velocity_Control(M3,0);
-    }
-
-
-}
-

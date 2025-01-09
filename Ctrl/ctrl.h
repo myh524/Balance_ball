@@ -22,22 +22,24 @@ extern ctrl_setpoint_t ctrl_setpoint;
 extern ctrl_setpoint_t ctrl_setpoint_offboard;
 extern ctrl_out_t ctrl_out;
 extern ctrl_out_t ctrl_out_sum;
-extern motorSpeed_t motorSpeed;
+extern motorCmd_t motorCmd;
 
 extern pid_calc_t roll_pid;
 extern pid_calc_t pitch_pid;
 extern pid_calc_t yaw_pid;
-extern pid_calc_t rollRate_pid;
-extern pid_calc_t pitchRate_pid;
-extern pid_calc_t yawRate_pid;
 
-void CtrlPIDInit(void);
 
-void CtrlStateUpdate(const Axis3f* _gyro_f, const attitude_t* _attitude, ctrl_state_t* _state);
-void CtrlSetpointUpdate(const ctrl_rc_t* _rc, ctrl_setpoint_t* _setpoint);
-void CtrlUpdate(const ctrl_rc_t* _rc,const ctrl_state_t* _state, ctrl_setpoint_t* _setpoint, ctrl_out_t* _out);
 
-void DriverSpeedUpdate(const ctrl_rc_t* _rc, const ctrl_out_t* _out, ctrl_out_t* _out_sum, motorSpeed_t* _motor);
+//这些都暂时不用了
+//void CtrlPIDInit(void);
+//void CtrlSetpointUpdate(const ctrl_rc_t* _rc, ctrl_setpoint_t* _setpoint);
+//void CtrlUpdate(const ctrl_rc_t* _rc,const ctrl_state_t* _state, ctrl_setpoint_t* _setpoint, ctrl_out_t* _out);
+//void DriverSpeedUpdate(const ctrl_rc_t* _rc, const ctrl_out_t* _out, ctrl_out_t* _out_sum, motorCmd_t* _motor);
+//void DriverCmdSend(ctrl_rc_t* _rc, motorCmd_t * _motor);
+//void CtrlStateUpdate(const Axis3f* _gyro_f, const attitude_t* _attitude, ctrl_state_t* _state);
+
+void RoboRolyWalkUpdate(); //简化版的，合了之前的setpoint，ctrl和speed update
+
 
 
 #ifdef __cplusplus

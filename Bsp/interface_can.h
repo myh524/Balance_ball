@@ -68,10 +68,11 @@ void ZDT_X42_V2_Origin_Interrupt(uint8_t addr); // 强制中断并退出回零
 void ZDT_X42_V2_Receive_Data(uint8_t *rxCmd, uint8_t *rxCount); // 返回数据接收函数
 
 void Drive_Init(uint32_t CAN_ID);
+void Drive_Clear_Error(uint32_t CAN_ID);
 void Driver_Velocity_Control(uint32_t CAN_ID, float target);
 void Driver_Torque_Control(uint32_t CAN_ID, float target);
-void Drive_Clear_Error(uint32_t CAN_ID);
-void DriverCmdSend(ctrl_rc_t* _rc, motorSpeed_t * _motor);
+
+
 
 
 #endif //BALANCEBALL_INTERFACE_CAN_H
