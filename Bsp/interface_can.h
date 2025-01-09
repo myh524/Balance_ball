@@ -12,10 +12,10 @@
 #include "ctrl_types.h"
 
 
-
-#define M0 0x001 //偏航轴飞轮
-#define M1 0x002 //滚转轴飞轮
-#define M2 0x003 //俯仰轴飞轮
+#define BROADCAST_ADDR 0x00
+#define M1 0x01
+#define M2 0x02
+#define M3 0x03
 
 #define	ABS(x) ((x) > 0 ? (x) : -(x))
 
@@ -68,7 +68,8 @@ void ZDT_X42_V2_Origin_Interrupt(uint8_t addr); // 强制中断并退出回零
 void ZDT_X42_V2_Receive_Data(uint8_t *rxCmd, uint8_t *rxCount); // 返回数据接收函数
 
 void Drive_Init(uint32_t CAN_ID);
-void Driver_control(uint32_t CAN_ID, int16_t target);
+void Driver_Velocity_Control(uint32_t CAN_ID, float target);
+void Driver_Torque_Control(uint32_t CAN_ID, float target);
 void Drive_Clear_Error(uint32_t CAN_ID);
 void DriverCmdSend(ctrl_rc_t* _rc, motorSpeed_t * _motor);
 

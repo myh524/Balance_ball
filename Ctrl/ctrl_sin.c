@@ -11,7 +11,7 @@ float theta1 = 0.0f;
 float theta2 = -M_PIf * 2 / 3;
 float theta3 = -M_PIf * 4 / 3;
 //周期
-float period = 1000.0f;//单位：ms
+float period = 10000.0f;//单位：ms
 
 float gain = 30.0f;
 float dcOffset = 30.0f;

@@ -498,11 +498,16 @@ void ZDT_X42_V2_Origin_Interrupt(uint8_t id)
 
 //驱动层代码(发送指令和数据)
 
-void Driver_control(uint32_t CAN_ID, int16_t target)
+void Driver_Velocity_Control(uint32_t CAN_ID, float target)
 {
-    uint8_t sign = ((target) > 0 ? (0) : 1);
-    ZDT_X42_V2_Velocity_Control((uint8_t)CAN_ID, sign, 65535, ABS(target), 0);
-//    ZDT_X42_V2_Torque_Control((uint8_t)CAN_ID, sign, 65535, ABS(target), 0);
+    ZDT_X42_V2_Velocity_Control((uint8_t)CAN_ID, ((target) > 0 ? (0) : 1),
+                                65535, ABS(target), 0);
+}
+
+void Driver_Torque_Control(uint32_t CAN_ID, float target)
+{
+    ZDT_X42_V2_Torque_Control((uint8_t)CAN_ID, ((target) > 0 ? (0) : 1),
+                              65535, ABS(target), 0);
 }
 
 void DriverCmdSend(ctrl_rc_t* _rc, motorSpeed_t * _motor){
@@ -510,15 +515,14 @@ void DriverCmdSend(ctrl_rc_t* _rc, motorSpeed_t * _motor){
     //这里因为可能没收到ibus信息，故不能检测到no就return
     if(_rc->armed == RC_ARMED_YES){
         //输出三个转轴的转速
-        Driver_control(M0,(int16_t)_motor->m1);
-        Driver_control(M1,(int16_t)_motor->m2);
-        Driver_control(M2,(int16_t)_motor->m3);
+        Driver_Velocity_Control(M1,_motor->m1);
+        Driver_Velocity_Control(M2,_motor->m2);
+        Driver_Velocity_Control(M3,_motor->m3);
     } else {
         //输出三个转轴的转速
-        Driver_control(M0,0);
-        Driver_control(M1,0);
-        Driver_control(M2,0);
-
+        Driver_Velocity_Control(M1,0);
+        Driver_Velocity_Control(M2,0);
+        Driver_Velocity_Control(M3,0);
     }
 
 
