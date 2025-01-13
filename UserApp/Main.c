@@ -157,11 +157,11 @@ void Main(void) {
 
     //改成步进电机后不需要初始化电机
 
-
+    init_x_d(&xa_roll, &xa_pitch, &xa_yaw);
     //LQR 获取期望状态的状态转移矩阵
-    get_A_d(0, h, &xa_pitch);
-    get_A_d(w_d, h, &xa_roll);
-    get_A_d(w_d, h, &xa_yaw);
+    init_A_d(0, h, &xa_pitch);
+    init_A_d(w_d, h, &xa_roll);
+    init_A_d(w_d, h, &xa_yaw);
 
     //PID
 //    CtrlPIDInit();

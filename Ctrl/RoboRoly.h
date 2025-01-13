@@ -16,6 +16,16 @@ extern float sin_time;
 extern float robot_time;
 extern const float total_time;
 extern const float deg;
+extern const float k_c;
+
+
+extern const float roll_d_sin_A;
+extern const float yaw_d_sin_A;
+extern const float roll_d_phase;
+extern const float yaw_d_phase;
+
+extern float xd_yaw_pro0;
+extern float xd_yaw_pro1;
 
 void RoboRolyWalkUpdate(); //简化版的，合了之前的setpoint，ctrl和speed update
 

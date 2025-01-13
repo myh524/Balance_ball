@@ -2,8 +2,10 @@
 // Created by sytnocui on 2025/1/10.
 //
 
+#include <math.h>
 #include "lqr.h"
 #include "utils/ctrl_math.h"
+#include "RoboRoly.h"
 
 lqr_xa_t xa_pitch;
 lqr_xa_t xa_roll;
@@ -29,6 +31,19 @@ void update_x_d(lqr_xa_t* _xa)
     _xa->dx_d = new_dx_d;
 }
 
+//给初值
+void init_x_d(lqr_xa_t* _xa_roll, lqr_xa_t* _xa_pitch, lqr_xa_t* _xa_yaw)
+{
+    _xa_roll->x_d = roll_d_sin_A * sinf(roll_d_phase);
+    _xa_roll->dx_d = roll_d_sin_A * w_d * cosf(roll_d_phase);
+
+    _xa_yaw->x_d = yaw_d_sin_A * sinf(yaw_d_phase);
+    _xa_yaw->dx_d = yaw_d_sin_A * w_d * cosf(yaw_d_phase);
+
+    _xa_pitch->x_d = 0;
+    _xa_pitch->dx_d = 0;
+}
+
 
 void update_u(lqr_xa_t* _xa)
 {
@@ -42,7 +57,7 @@ void update_u(lqr_xa_t* _xa)
 
 
 // 计算矩阵指数的函数
-void get_A_d(float _w_d, float _h, lqr_xa_t* _xa)
+void init_A_d(float _w_d, float _h, lqr_xa_t* _xa)
 {
     // 初始化系统矩阵 A
     float A[2][2] = {

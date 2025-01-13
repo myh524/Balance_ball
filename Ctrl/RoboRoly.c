@@ -28,6 +28,19 @@ const float total_time = 10.0f;
 
 const float deg = M_PIf / 180;
 
+
+const float roll_d_sin_A = 30 * deg;
+const float yaw_d_sin_A = 30 * deg;
+const float roll_d_phase = -M_PIf*3/2;
+const float yaw_d_phase = roll_d_phase + M_PIf/2;
+
+//用于记录带转弯的期望的转角
+float xd_yaw_pro0 = 0;
+float xd_yaw_pro1 = 0;
+
+//计算转弯
+const float k_c = 0 * deg; //转弯的速度
+
 void RoboRolyWalkUpdate()
 {
     ///////////////////////////////////////////////////
@@ -47,8 +60,7 @@ void RoboRolyWalkUpdate()
     update_x_d(&xa_roll);
     update_x_d(&xa_yaw);
 
-    //计算转弯
-    float k_c = 10 * deg; //转弯的速度
+
     float xd_yaw_turn_offset_0 = 0;
     float xd_yaw_turn_offset_1 = 0;
     if (robot_time < total_time/2) {
@@ -60,7 +72,9 @@ void RoboRolyWalkUpdate()
     }
     xa_yaw.x_d += xd_yaw_turn_offset_0;
     xa_yaw.dx_d += xd_yaw_turn_offset_1;
-
+    //记录，供画图
+    xd_yaw_pro0 = xa_yaw.x_d;
+    xd_yaw_pro1 = xa_yaw.dx_d;
 
 
     ///////////////////////////////////////////////////
@@ -99,7 +113,7 @@ void RoboRolyWalkUpdate()
             {-0.4082483f, 0.7071068f, -0.5773503f},
             {-0.4082483f, -0.7071068f, -0.5773503f}};
 
-    float K = 1.0f;
+    float K = 10.0f;
     motorCmd.m1 = K * (speedMatrix[0][0] * xa_roll.u + speedMatrix[0][1] * xa_pitch.u + speedMatrix[0][2] * xa_yaw.u);
     motorCmd.m2 = K * (speedMatrix[1][0] * xa_roll.u + speedMatrix[1][1] * xa_pitch.u + speedMatrix[1][2] * xa_yaw.u);
     motorCmd.m3 = K * (speedMatrix[2][0] * xa_roll.u + speedMatrix[2][1] * xa_pitch.u + speedMatrix[2][2] * xa_yaw.u);
