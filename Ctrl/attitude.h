@@ -7,7 +7,6 @@
 
 #include <ctrl_types.h>
 #include <senser_types.h>
-#include "ctrl.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -26,13 +25,12 @@ extern Axis3f gyro_f;
 extern Axis3f acc_f;
 ////---------------------------------姿态相关变量------------------------------
 extern float q[4];
-extern attitude_t state_attitude;
+extern attitude_t state_eul;
 extern attitude_t state_attitude_angle;
+extern attitude_t state_deul ;
 
 
 void MahonyAHRSupdateIMU(float _q[4], float gx, float gy, float gz, float ax, float ay, float az);
-void SytnocuiAHRSupdateIMU(float q[4], float gx, float gy, float gz, float ax, float ay, float az);
-void AttitudeQuaternionToEulerAngle(const float q[4], attitude_t* attitude);
 void AttitudeRadianToAngle(attitude_t* radian, attitude_t* angle);
 void CoordinateRotation(Axis3i16* _acc, Axis3i16* _gyro, Axis3i16* _acc_body, Axis3i16* _gyro_body);
 

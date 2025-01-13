@@ -9,19 +9,17 @@
 #include <math.h>
 #include <interface_can.h>
 #include "tim.h"
-#include "ctrl_types.h"
 #include "senser_types.h"
-#include "ctrl_sin.h"
 #include "attitude.h"
+#include "ctrl_types.h"
 
-//TODO:增加这几个东西的初始化函数
-float ctrl_time = 0;
-ctrl_rc_t ctrl_rc;
-ctrl_state_t ctrl_state;
-ctrl_setpoint_t ctrl_setpoint;
-ctrl_setpoint_t ctrl_setpoint_offboard;
-ctrl_out_t ctrl_out;
-ctrl_out_t ctrl_out_sum; //计算转速饱和用的
+
+//ctrl_rc_t ctrl_rc;
+//ctrl_state_t ctrl_state;
+//ctrl_setpoint_t ctrl_setpoint;
+//ctrl_setpoint_t ctrl_setpoint_offboard;
+//ctrl_out_t ctrl_out;
+//ctrl_out_t ctrl_out_sum; //计算转速饱和用的
 motorCmd_t motorCmd = {0.0f, 0.0f, 0.0f};
 
 ////PID
@@ -190,32 +188,4 @@ motorCmd_t motorCmd = {0.0f, 0.0f, 0.0f};
 //
 //}
 
-
-void RoboRolyWalkUpdate(){
-    ///////////////////////////////////////////////////
-    // 状态量获取
-    ///////////////////////////////////////////////////
-    ctrl_state.attitudeRate.roll = gyro_f.x;
-    ctrl_state.attitudeRate.pitch = gyro_f.y;
-    ctrl_state.attitudeRate.yaw = gyro_f.z;
-    ////注意！！！在这里用的是弧度制
-    ctrl_state.attitude.roll = state_attitude.roll;
-    ctrl_state.attitude.pitch = state_attitude.pitch;
-    ctrl_state.attitude.yaw = state_attitude.yaw;
-
-    ///////////////////////////////////////////////////
-    // LQR控制器
-    ///////////////////////////////////////////////////
-
-    //转速分配矩阵  由于角动量守恒反作用原理，整个矩阵都乘以 -1
-    const static float speedMatrix[3][3]={
-            {0.8164966f, 0.0f, -0.5773503f},
-            {-0.4082483f, 0.7071068f, -0.5773503f},
-            {-0.4082483f, -0.7071068f, -0.5773503f}};
-
-    float K = 5.0f;
-    motorCmd.m1 = K * (speedMatrix[0][0] * ctrl_out.roll + speedMatrix[0][1] * ctrl_out.pitch + speedMatrix[0][2] * ctrl_out.yaw);
-    motorCmd.m2 = K * (speedMatrix[1][0] * ctrl_out.roll + speedMatrix[1][1] * ctrl_out.pitch + speedMatrix[1][2] * ctrl_out.yaw);
-    motorCmd.m3 = K * (speedMatrix[2][0] * ctrl_out.roll + speedMatrix[2][1] * ctrl_out.pitch + speedMatrix[2][2] * ctrl_out.yaw);
-}
 

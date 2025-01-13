@@ -15,18 +15,18 @@ extern "C" {
 #include "stdio.h"
 #include "pid.h"
 
-extern float ctrl_time;
-extern ctrl_rc_t ctrl_rc;
-extern ctrl_state_t ctrl_state;
-extern ctrl_setpoint_t ctrl_setpoint;
-extern ctrl_setpoint_t ctrl_setpoint_offboard;
-extern ctrl_out_t ctrl_out;
-extern ctrl_out_t ctrl_out_sum;
+
+//extern ctrl_rc_t ctrl_rc;
+//extern ctrl_state_t ctrl_state;
+//extern ctrl_setpoint_t ctrl_setpoint;
+//extern ctrl_setpoint_t ctrl_setpoint_offboard;
+//extern ctrl_out_t ctrl_out;
+//extern ctrl_out_t ctrl_out_sum;
 extern motorCmd_t motorCmd;
 
-extern pid_calc_t roll_pid;
-extern pid_calc_t pitch_pid;
-extern pid_calc_t yaw_pid;
+//extern pid_calc_t roll_pid;
+//extern pid_calc_t pitch_pid;
+//extern pid_calc_t yaw_pid;
 
 
 
@@ -38,7 +38,6 @@ extern pid_calc_t yaw_pid;
 //void DriverCmdSend(ctrl_rc_t* _rc, motorCmd_t * _motor);
 //void CtrlStateUpdate(const Axis3f* _gyro_f, const attitude_t* _attitude, ctrl_state_t* _state);
 
-void RoboRolyWalkUpdate(); //简化版的，合了之前的setpoint，ctrl和speed update
 
 
 

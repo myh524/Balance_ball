@@ -4,8 +4,7 @@
 
 #include "attitude.h"
 
-#include "ctrl.h"
-#include "pid.h"
+
 #include "ctrl_types.h"
 #include "senser_types.h"
 #include <math.h>
@@ -30,10 +29,11 @@ Axis3f gyro_f = {0,0,0};
 //姿态四元数
 float q[4] = {1.0f, 0.0f, 0.0f, 0.0f};
 //欧拉角
-attitude_t state_attitude = {0,0.0f,0.0f,0.0f};
+attitude_t state_eul = {0, 0.0f, 0.0f, 0.0f};
 //角度制的欧拉角
 attitude_t state_attitude_angle = {0,0.0f,0.0f,0.0f};
-const float PI = 3.141592f;
+//欧拉角变化率
+attitude_t state_deul = {0,0.0f,0.0f,0.0f};
 ////--------------------------------------------------------------------------
 
 ////--------------------------------------------姿态解算
@@ -136,27 +136,8 @@ void MahonyAHRSupdateIMU(float _q[4], float gx, float gy, float gz, float ax, fl
     //Mahony官方程序到此结束，使用时只需在函数外进行四元数反解欧拉角即可完成全部姿态解算过程
 }
 
-void AttitudeQuaternionToEulerAngle(const float _q[4], attitude_t* _attitude){
-    // 传入的结果是指针，结果返回到传入参数地址内
-    // 四元数反算欧拉角
-    // 使用子蕤那嫖的正点原子的估算，asinf没有换，正点原子也没有换
-    // 自己写的不知道为什么就是不好使，chatgpt一下场，生成的立马好使了
-    float w = _q[0], x = _q[1], y = _q[2], z = _q[3];
-    // roll
-    float sinr_cosp = 2 * (w*x + y*z);
-    float cosr_cosp = 1 - 2 * (x*x + y*y);
-    _attitude->roll = atan2_approx(sinr_cosp, cosr_cosp);
-    // pitch
-    float sinp = 2 * (w*y - z*x);
-    if (fabsf(sinp) >= 1)
-        _attitude->pitch = copysignf(M_PI / 2, sinp); // use 90 degrees if out of range
-    else
-        _attitude->pitch = asinf(sinp);
-    // yaw
-    float siny_cosp = 2 * (w*z + x*y);
-    float cosy_cosp = 1 - 2 * (y*y + z*z);
-    _attitude->yaw = atan2_approx(siny_cosp, cosy_cosp);
-}
+
+
 
 
 void AttitudeRadianToAngle(attitude_t* radian, attitude_t* angle){

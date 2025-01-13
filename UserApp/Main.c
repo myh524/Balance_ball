@@ -11,8 +11,10 @@
 #include <retarget.h>
 #include "common_inc.h"
 #include "can.h"
-#include "ctrl.h"
-#include "ctrl_sin.h"
+#include "RoboRoly.h"
+#include "utils/attitude_utils.h"
+#include "lqr.h"
+#include "nouse/ctrl.h"
 
 // 定义用哪个陀螺仪
 enum IMU_CONFIG{
@@ -35,18 +37,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
     if (htim->Instance == TIM3) {
 
         //更新时间
-        ctrl_time += 10; //单位ms
-        if(ctrl_time > period){
-            ctrl_time = 0;
+        robot_time += 0.01f; //单位s
+        sin_time += 0.01f; //单位s
+        if(sin_time > t_d){
+            sin_time = 0;
         }
-
-        //添加安全保护，如果一定时间内没有收到串口的数据，则停车
-        safe_time++;
-        if (safe_time >= 100){
-            ctrl_rc.armed = RC_ARMED_NO;
-            safe_time = 100;
-        }
-
 
         //读取角速度和加速度
         if(imu_config == IMU_USE_ICM42688P){
@@ -63,22 +58,19 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         //这里传入的参数坐标系有一个转换关系
         MahonyAHRSupdateIMU(q, gyro_f.x, gyro_f.y, gyro_f.z, acc_f.x, acc_f.y, acc_f.z);
         // 四元数反解欧拉角
-        AttitudeQuaternionToEulerAngle(q,&state_attitude);
-        // 转换单位
-        AttitudeRadianToAngle(&state_attitude,&state_attitude_angle);
+        QuaternionToEuler_ZXY(q, &state_eul);
 
+        //解算出欧拉角的变化率，供LQR使用
+        w2deul_zxy(&state_eul, &gyro_f, &state_deul);
+//        // 转换单位(可视化用的)
+//        AttitudeRadianToAngle(&state_eul,&state_attitude_angle);
 
         //更新主控制器
         RoboRolyWalkUpdate();
 
-        Driver_Torque_Control(M1,motorCmd.m1);
-        Driver_Torque_Control(M2,motorCmd.m2);
-        Driver_Torque_Control(M3,motorCmd.m3);
-
-
 ////////////////////////////////////////////////////////////////////
 //        //更新当前姿态和目标姿态
-//        CtrlStateUpdate(&gyro_f,&state_attitude,&ctrl_state); ////注意！！！在这里用的是弧度制
+//        CtrlStateUpdate(&gyro_f,&state_eul,&ctrl_state); ////注意！！！在这里用的是弧度制
 //        // 更新目标值
 //        CtrlSetpointUpdate(&ctrl_rc, &ctrl_setpoint);
 //        //更新姿态控制pid
@@ -104,13 +96,13 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
     if(huart->Instance==USART2)
     {
         //串口dma+空闲中断，接受wifi的指令
-        WIFIRead(wifi_rx_buffer, &ctrl_rc);
+//        WIFIRead(wifi_rx_buffer, &ctrl_rc);
 
         //如果正常收到了串口指令，则安全计时会一直清零
         safe_time = 0;
 
 
-//        if (ctrl_time >= 500){
+//        if (robot_time >= 0.5){
 //            HAL_GPIO_WritePin(LED0_GPIO_Port,LED0_Pin,GPIO_PIN_RESET);
 //        } else{
 //            HAL_GPIO_WritePin(LED0_GPIO_Port,LED0_Pin,GPIO_PIN_SET);
@@ -165,6 +157,12 @@ void Main(void) {
 
     //改成步进电机后不需要初始化电机
 
+
+    //LQR 获取期望状态的状态转移矩阵
+    get_A_d(0, h, &xa_pitch);
+    get_A_d(w_d, h, &xa_roll);
+    get_A_d(w_d, h, &xa_yaw);
+
     //PID
 //    CtrlPIDInit();
 
@@ -193,7 +191,7 @@ void Main(void) {
         }
 
         //----------------------------------------wifi通信发送-----------------------------------
-        printf("%.3f,%.3f,%.3f\r\n", state_attitude_angle.roll, state_attitude_angle.pitch, state_attitude_angle.yaw);
+        printf("%.3f,%.3f,%.3f\r\n", xa_roll.x_d, xa_pitch.x_d, xa_yaw.x_d);
 
 //        printf("Hello World!\r\n");
 
