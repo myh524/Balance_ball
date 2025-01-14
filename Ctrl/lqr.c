@@ -32,16 +32,10 @@ void update_x_d(lqr_xa_t* _xa)
 }
 
 //给初值
-void init_x_d(lqr_xa_t* _xa_roll, lqr_xa_t* _xa_pitch, lqr_xa_t* _xa_yaw)
+void init_x_d(lqr_xa_t* _xa, float _A, float _phase)
 {
-    _xa_roll->x_d = roll_d_sin_A * sinf(roll_d_phase);
-    _xa_roll->dx_d = roll_d_sin_A * w_d * cosf(roll_d_phase);
-
-    _xa_yaw->x_d = yaw_d_sin_A * sinf(yaw_d_phase);
-    _xa_yaw->dx_d = yaw_d_sin_A * w_d * cosf(yaw_d_phase);
-
-    _xa_pitch->x_d = 0;
-    _xa_pitch->dx_d = 0;
+    _xa->x_d = _A * sinf(_phase);
+    _xa->dx_d = _A * w_d * cosf(_phase);
 }
 
 

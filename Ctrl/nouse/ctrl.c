@@ -31,12 +31,12 @@ motorCmd_t motorCmd = {0.0f, 0.0f, 0.0f};
 //void CtrlStateUpdate(const Axis3f* _gyro_f, const attitude_t* _attitude, ctrl_state_t* _state){
 //    //通过姿态解算获得的实际值，存在state里，无需进行单位换算
 //    //到这里应该是正负都已经弄好的,如果不对记得看看
-//    _state->attitudeRate.roll = _gyro_f->x;
+//    _state->attitudeRate.fsm_roll = _gyro_f->x;
 //    _state->attitudeRate.pitch = _gyro_f->y;
 //    _state->attitudeRate.yaw = _gyro_f->z;
 //
 //    ////注意！！！在这里用的是弧度制
-//    _state->attitude.roll = _attitude->roll;
+//    _state->attitude.fsm_roll = _attitude->fsm_roll;
 //    _state->attitude.pitch = _attitude->pitch;
 //    _state->attitude.yaw = _attitude->yaw;
 //}
@@ -54,14 +54,14 @@ motorCmd_t motorCmd = {0.0f, 0.0f, 0.0f};
 //    if(_rc->mode == RC_MODE_STABILIZED) //自稳模式
 //    {
 //        //期望角度
-//        _setpoint->attitude.roll = 0;
+//        _setpoint->attitude.fsm_roll = 0;
 //        _setpoint->attitude.pitch = 0;
 //        _setpoint->attitude.yaw = 0;
 //    }
 //    else if(_rc->mode == RC_MODE_TORQUE) //定姿模式
 //    {
 //        // 期望角度
-//        _setpoint->torque.roll = _rc->roll;
+//        _setpoint->torque.fsm_roll = _rc->fsm_roll;
 //        _setpoint->torque.pitch = _rc->pitch;
 //        _setpoint->torque.yaw = _rc->yaw;
 //    }
@@ -72,13 +72,13 @@ motorCmd_t motorCmd = {0.0f, 0.0f, 0.0f};
 //    else
 //    {
 //        //什么mode都没识别到，按自稳的给，全给0
-//        _setpoint->attitude.roll = 0;
+//        _setpoint->attitude.fsm_roll = 0;
 //        _setpoint->attitude.pitch = 0;
 //        _setpoint->attitude.yaw = 0;
-//        _setpoint->attitudeRate.roll = 0;
+//        _setpoint->attitudeRate.fsm_roll = 0;
 //        _setpoint->attitudeRate.pitch = 0;
 //        _setpoint->attitudeRate.yaw = 0;
-//        _setpoint->torque.roll = 0;
+//        _setpoint->torque.fsm_roll = 0;
 //        _setpoint->torque.pitch = 0;
 //        _setpoint->torque.yaw = 0;
 //    }
@@ -93,14 +93,14 @@ motorCmd_t motorCmd = {0.0f, 0.0f, 0.0f};
 //        if(_rc->mode == RC_MODE_STABILIZED) //自稳模式
 //        {
 //            //角度环
-//            _out->roll =  PID_calc(&roll_pid, _state->attitude.roll, _setpoint->attitude.roll);
+//            _out->fsm_roll =  PID_calc(&roll_pid, _state->attitude.fsm_roll, _setpoint->attitude.fsm_roll);
 //            _out->pitch = PID_calc(&pitch_pid, _state->attitude.pitch, _setpoint->attitude.pitch);
 //            _out->yaw = PID_calc(&yaw_pid, _state->attitude.yaw, _setpoint->attitude.yaw);
 //        }
 //        else if(_rc->mode == RC_MODE_TORQUE) //开环力矩模式
 //        {
 //            //开环力矩模式现在为直传
-//            _out->roll =  _setpoint->torque.roll;
+//            _out->fsm_roll =  _setpoint->torque.fsm_roll;
 //            _out->pitch = _setpoint->torque.pitch;
 //            _out->yaw =  _setpoint->torque.yaw;
 //
@@ -112,7 +112,7 @@ motorCmd_t motorCmd = {0.0f, 0.0f, 0.0f};
 //        else
 //        {
 //            //什么mode都没识别到，全给0
-//            _out->roll = 0;
+//            _out->fsm_roll = 0;
 //            _out->pitch = 0;
 //            _out->yaw = 0;
 //        }
@@ -120,7 +120,7 @@ motorCmd_t motorCmd = {0.0f, 0.0f, 0.0f};
 //    }
 //    else {
 //        //没解锁
-//        _out->roll = 0;
+//        _out->fsm_roll = 0;
 //        _out->pitch = 0;
 //        _out->yaw = 0;
 //    }
@@ -144,9 +144,9 @@ motorCmd_t motorCmd = {0.0f, 0.0f, 0.0f};
 //        || _rc->mode == RC_MODE_TORQUE ) //自稳模式 力矩模式
 //        {
 //            float K = 5.0f;
-//            _motor->m1 = K * (speedMatrix[0][0] * _out->roll + speedMatrix[0][1] * _out->pitch + speedMatrix[0][2] * _out->yaw);
-//            _motor->m2 = K * (speedMatrix[1][0] * _out->roll + speedMatrix[1][1] * _out->pitch + speedMatrix[1][2] * _out->yaw);
-//            _motor->m3 = K * (speedMatrix[2][0] * _out->roll + speedMatrix[2][1] * _out->pitch + speedMatrix[2][2] * _out->yaw);
+//            _motor->m1 = K * (speedMatrix[0][0] * _out->fsm_roll + speedMatrix[0][1] * _out->pitch + speedMatrix[0][2] * _out->yaw);
+//            _motor->m2 = K * (speedMatrix[1][0] * _out->fsm_roll + speedMatrix[1][1] * _out->pitch + speedMatrix[1][2] * _out->yaw);
+//            _motor->m3 = K * (speedMatrix[2][0] * _out->fsm_roll + speedMatrix[2][1] * _out->pitch + speedMatrix[2][2] * _out->yaw);
 //        }
 //        else if(_rc->mode == RC_MODE_WALK){
 //

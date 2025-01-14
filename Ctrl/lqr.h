@@ -30,7 +30,7 @@ extern lqr_xa_t xa_roll;
 extern lqr_xa_t xa_yaw;
 
 
-void init_x_d(lqr_xa_t* _xa_roll, lqr_xa_t* _xa_pitch, lqr_xa_t* _xa_yaw);
+void init_x_d(lqr_xa_t* _xa, float _A, float _phase);
 void init_A_d(float _w_d, float _h, lqr_xa_t* _xa);
 //void update_w_d(float _t_d);
 void update_x_d(lqr_xa_t* _xa);

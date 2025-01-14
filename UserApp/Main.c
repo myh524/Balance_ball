@@ -9,6 +9,7 @@
 #include <icm42688.h>
 #include <interface_uart.h>
 #include <retarget.h>
+#include <math.h>
 #include "common_inc.h"
 #include "can.h"
 #include "RoboRoly.h"
@@ -36,13 +37,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
     //tim3定时器中断
     if (htim->Instance == TIM3) {
 
-        //更新时间
-        robot_time += 0.01f; //单位s
-        sin_time += 0.01f; //单位s
-        if(sin_time > t_d){
-            sin_time = 0;
-        }
-
         //读取角速度和加速度
         if(imu_config == IMU_USE_ICM42688P){
             icm42688AccAndGyroRead(&acc_raw, &gyro_raw);
@@ -65,8 +59,56 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 //        // 转换单位(可视化用的)
 //        AttitudeRadianToAngle(&state_eul,&state_attitude_angle);
 
+
+        //更新时间
+        robot_time += h; //单位s
+
+
+        if (robot_fsm == fsm_waitToStart && robot_time >= 5.0f){
+            robot_fsm = fsm_roll; //更新状态
+            init_x_d(&xa_roll, roll_d_sin_A, roll_d_phase);
+        }
+
+        if (robot_fsm == fsm_roll)
+        {
+            roll_time += h; //单位s
+            sin_time += h; //单位s
+            if(sin_time > t_d){
+                sin_time = 0;
+                roll_period_count++;
+            }
+            //如果超周期了，就切换状态，开始行走
+            //注意这里延迟了pi/2赋值，为了使yaw开始时为0;
+            if (roll_period_count >= roll_total_period && sin_time >= t_d/4)
+            {
+                robot_fsm = fsm_walk;
+                init_x_d(&xa_yaw, yaw_d_sin_A, 0); //注意相位
+            }
+        }
+
+        if (robot_fsm == fsm_walk)
+        {
+            walk_time += h; //单位s
+            sin_time += h; //单位s
+            if(sin_time > t_d){
+                sin_time = 0;
+                walk_period_count++;
+            }
+
+            //如果超周期了，就切换状态，停止运动
+            if (walk_period_count >= walk_total_period)
+            {
+                robot_fsm = fsm_stop;
+                init_x_d(&xa_roll, 0, 0);
+                init_x_d(&xa_pitch, 0, 0);
+                init_x_d(&xa_yaw, 0, 0);
+            }
+
+        }
         //更新主控制器
         RoboRolyWalkUpdate();
+
+
 
 ////////////////////////////////////////////////////////////////////
 //        //更新当前姿态和目标姿态
@@ -82,10 +124,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 /////////////////////////////////////////////////////////////////////////////
 
 
-
-
-
-
     }
 }
 
@@ -98,15 +136,6 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
         //串口dma+空闲中断，接受wifi的指令
 //        WIFIRead(wifi_rx_buffer, &ctrl_rc);
 
-        //如果正常收到了串口指令，则安全计时会一直清零
-        safe_time = 0;
-
-
-//        if (robot_time >= 0.5){
-//            HAL_GPIO_WritePin(LED0_GPIO_Port,LED0_Pin,GPIO_PIN_RESET);
-//        } else{
-//            HAL_GPIO_WritePin(LED0_GPIO_Port,LED0_Pin,GPIO_PIN_SET);
-//        }
 
         //重新打开DMA接收 idle中断
         HAL_UARTEx_ReceiveToIdle_DMA(&WIFI_UART, wifi_rx_buffer, sizeof(wifi_rx_buffer));
@@ -134,18 +163,23 @@ void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan)
 
 /* Default Entry -------------------------------------------------------*/
 void Main(void) {
-
-    //！！！
-    //NOTE:注意！！！printf已经重定向到WIFI，gh 3p 的那个串口目前没用
-    //！！！
     RetargetInit(&WIFI_UART);
 
+    //提示准备校准
+    for (int i = 0; i < 10; ++i) {
+        HAL_GPIO_TogglePin(LED0_GPIO_Port,LED0_Pin);
+        HAL_Delay(300);
+    }
+
+    //////////////////////////////////////////////////////////////////////
+    // 陀螺仪
+    //////////////////////////////////////////////////////////////////////
     //陀螺仪自检
     HAL_Delay(1000);
+    HAL_GPIO_WritePin(LED0_GPIO_Port,LED0_Pin, GPIO_PIN_RESET);
     if (!icm42688_self_check()){
         imu_config = IMU_USE_ICM42688P;
     }
-
     //陀螺仪初始化
     if(imu_config == IMU_USE_ICM42688P){
         icm42688Init();
@@ -153,25 +187,31 @@ void Main(void) {
         ICM42688P_Gyro_And_Acc_Calibrate(&gyro_drift, &acc_drift);
     }
 
-    HAL_Delay(100);
-
-    //改成步进电机后不需要初始化电机
-
-    init_x_d(&xa_roll, &xa_pitch, &xa_yaw);
+    //////////////////////////////////////////////////////////////////////
+    //提示准备开始
+    for (int i = 0; i < 10; ++i) {
+        HAL_GPIO_TogglePin(LED0_GPIO_Port,LED0_Pin);
+        HAL_Delay(300);
+    }
+    robot_fsm = fsm_waitToStart; //更新状态
+    /////////////////////////////////////////////////////////////////////////
+    /// LQR
+    /////////////////////////////////////////////////////////////////////////
+    init_x_d(&xa_roll, 0, 0);
+    init_x_d(&xa_pitch, 0, 0);
+    init_x_d(&xa_yaw, 0, 0);
     //LQR 获取期望状态的状态转移矩阵
     init_A_d(0, h, &xa_pitch);
     init_A_d(w_d, h, &xa_roll);
     init_A_d(w_d, h, &xa_yaw);
-
+    //////////////////////////////////////////////////////////////////////
     //PID
 //    CtrlPIDInit();
 
     //wifi 串口DMA空闲中断 enable
     HAL_UARTEx_ReceiveToIdle_DMA(&WIFI_UART, wifi_rx_buffer, sizeof(wifi_rx_buffer));
-
     // 启动CAN接收中断
     HAL_CAN_ActivateNotification(&hcan, CAN_IT_RX_FIFO1_MSG_PENDING);
-
     //启动定时器
     HAL_TIM_Base_Start_IT(&htim3);
 
@@ -191,12 +231,12 @@ void Main(void) {
         }
 
         //----------------------------------------wifi通信发送-----------------------------------
-        printf("%.3f,%.3f,%.3f\r\n", xa_roll.x_d, xa_pitch.x_d, xa_yaw.x_d);
+//        printf("%.3f,%.3f,%.3f\r\n", xa_roll.x_d, xa_pitch.x_d, xa_yaw.x_d);
+        printf("%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f\r\n", robot_time, roll_time, walk_time, sin_time, (float)roll_period_count, (float)walk_period_count, (float)robot_fsm);
 
 //        printf("Hello World!\r\n");
 
         //Blink
-        HAL_GPIO_TogglePin(LED1_GPIO_Port,LED1_Pin);
         HAL_GPIO_TogglePin(LED0_GPIO_Port,LED0_Pin);
         //-----------------------------Delay
         HAL_Delay(100);

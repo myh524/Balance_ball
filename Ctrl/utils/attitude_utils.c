@@ -33,7 +33,7 @@ void QuaternionToEuler_ZYX(float _q[4], attitude_t* _eul)
     normalizeQuaternion(_q);
 
     float w = _q[0], x = _q[1], y = _q[2], z = _q[3];
-    // roll
+    // fsm_roll
     float sinr_cosp = 2 * (w*x + y*z);
     float cosr_cosp = 1 - 2 * (x*x + y*y);
     _eul->roll = atan2_approx(sinr_cosp, cosr_cosp);
@@ -78,7 +78,7 @@ void QuaternionToEuler_YXZ(float _q[4], attitude_t* _eul)
     // yaw
     _eul->yaw = atan2_approx(R21, R22);
 
-    // roll
+    // fsm_roll
     if (fabsf(-R23) >= 1 - EPSILON) //奇异值处理
         _eul->roll = copysignf(M_PIf / 2, -R23); // use 90 degrees if out of range
     else
@@ -115,7 +115,7 @@ void QuaternionToEuler_ZXY(float _q[4], attitude_t* _eul)
     // pitch
     _eul->pitch = atan2_approx(-R31, R33);
 
-    // roll
+    // fsm_roll
     if (fabsf(R32) >= 1 - EPSILON) //奇异值处理
         _eul->roll = copysignf(M_PIf / 2, R32); // use 90 degrees if out of range
     else
