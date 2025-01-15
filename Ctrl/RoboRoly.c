@@ -43,11 +43,18 @@ const float roll_d_phase = -M_PIf;
 const float yaw_d_phase = roll_d_phase + M_PIf/2; //暂时不用了
 
 //计算转弯
-const float k_c = 0 * deg; //转弯的速度
+//const float k_c = 5 * deg; //转弯的速度 单位和仿真的不同，为：deg/周期
+const float k_c = 0 * deg; //转弯的速度 单位和仿真的不同，为：deg/周期
 
 //用于记录带转弯的期望的转角
 float xd_yaw_pro0 = 0;
 float xd_yaw_pro1 = 0;
+
+float plot_data[6];
+
+//转弯相关
+float xd_yaw_turn_offset_0 = 0;
+float xd_yaw_turn_offset_1 = 0;
 
 
 RoboRoly_FSM_e robot_fsm = fsm_waitToCalib;
@@ -72,16 +79,19 @@ void RoboRolyWalkUpdate()
     update_x_d(&xa_roll);
     update_x_d(&xa_yaw);
 
+
+
     // 转弯相关
-    float xd_yaw_turn_offset_0 = 0;
-    float xd_yaw_turn_offset_1 = 0;
-    if (walk_period_count < walk_half_period) {
-        xd_yaw_turn_offset_0 = k_c * walk_time;
-        xd_yaw_turn_offset_1 = k_c;
-    } else {
-        xd_yaw_turn_offset_0 = k_c * ((float)walk_half_period * t_d )
-                - k_c * (walk_time - (float)walk_half_period * t_d);
-        xd_yaw_turn_offset_1 = -k_c;
+    xd_yaw_turn_offset_0 = 0;
+    xd_yaw_turn_offset_1 = 0;
+    if (robot_fsm == fsm_walk){
+        if (walk_period_count < walk_half_period) {
+            xd_yaw_turn_offset_0 = k_c * (sin_time * f_d + (float)walk_period_count);
+            xd_yaw_turn_offset_1 = k_c * f_d;
+        } else {
+            xd_yaw_turn_offset_0 = k_c * ((float)walk_total_period - sin_time * f_d - (float)walk_period_count);
+            xd_yaw_turn_offset_1 = -k_c * f_d;
+        }
     }
     xa_yaw.x_d += xd_yaw_turn_offset_0;
     xa_yaw.dx_d += xd_yaw_turn_offset_1;
@@ -100,6 +110,7 @@ void RoboRolyWalkUpdate()
     const static float F_roll[5]= {0.39004f, 1.3872465086f, 0.386598045243584f, 1.39867824278894f, 0.1143467238929f};
     //yaw的这个权重调整后在matlab重新生成
     const static float F_yaw[5]= {23.6762444052160f, 24.1615412389158f, 20.5010253203498f, 24.1764796523058f, 0.434720700061298f};
+//    const static float F_yaw[5]= {38.1774f,   38.8566f,  -22.8989f,  -38.7880f,    0.7077f};
     memcpy(xa_pitch.F, F_pitch, sizeof(F_pitch));
     memcpy(xa_roll.F, F_roll, sizeof(F_roll));
     memcpy(xa_yaw.F, F_yaw, sizeof(F_yaw));
@@ -112,6 +123,12 @@ void RoboRolyWalkUpdate()
     xa_yaw.x = normalize_angle(xa_yaw.x_d, xa_yaw.x);
     update_u(&xa_yaw);
 
+    plot_data[0] = xa_pitch.u;
+    plot_data[1] = xa_roll.u;
+    plot_data[2] = xa_yaw.u;
+    plot_data[3] = xa_pitch.x_d - xa_pitch.x;
+    plot_data[4] = xa_roll.x_d - xa_roll.x;
+    plot_data[5] = xa_yaw.x_d - xa_yaw.x;
 
     /////////////////////////////////////////////////////////////
     //重要！！！ 计算完u之后，把加上的转弯偏置移除，以防下次影响Ad的计算。

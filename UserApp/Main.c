@@ -166,9 +166,9 @@ void Main(void) {
     RetargetInit(&WIFI_UART);
 
     //提示准备校准
-    for (int i = 0; i < 10; ++i) {
+    for (int i = 0; i < 20; ++i) {
         HAL_GPIO_TogglePin(LED0_GPIO_Port,LED0_Pin);
-        HAL_Delay(300);
+        HAL_Delay(250);
     }
 
     //////////////////////////////////////////////////////////////////////
@@ -189,9 +189,9 @@ void Main(void) {
 
     //////////////////////////////////////////////////////////////////////
     //提示准备开始
-    for (int i = 0; i < 10; ++i) {
+    for (int i = 0; i < 5; ++i) {
         HAL_GPIO_TogglePin(LED0_GPIO_Port,LED0_Pin);
-        HAL_Delay(300);
+        HAL_Delay(200);
     }
     robot_fsm = fsm_waitToStart; //更新状态
     /////////////////////////////////////////////////////////////////////////
@@ -232,7 +232,7 @@ void Main(void) {
 
         //----------------------------------------wifi通信发送-----------------------------------
 //        printf("%.3f,%.3f,%.3f\r\n", xa_roll.x_d, xa_pitch.x_d, xa_yaw.x_d);
-        printf("%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f\r\n", robot_time, roll_time, walk_time, sin_time, (float)roll_period_count, (float)walk_period_count, (float)robot_fsm);
+        printf("%.3f,%.3f,%.3f,%.3f,%.3f,%.3f\r\n", plot_data[0], plot_data[1], plot_data[2], plot_data[3], plot_data[4], plot_data[5]);
 
 //        printf("Hello World!\r\n");
 

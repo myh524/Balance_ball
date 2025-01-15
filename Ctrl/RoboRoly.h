@@ -47,6 +47,11 @@ extern const float yaw_d_phase;
 extern float xd_yaw_pro0;
 extern float xd_yaw_pro1;
 
+extern float xd_yaw_turn_offset_0;
+extern float xd_yaw_turn_offset_1;
+
+extern float plot_data[6];
+
 extern RoboRoly_FSM_e robot_fsm;
 
 void RoboRolyWalkUpdate(); //简化版的，合了之前的setpoint，ctrl和speed update
