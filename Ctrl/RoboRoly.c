@@ -31,7 +31,7 @@ float sin_time = 0; //单周期时间，过了固有周期会清零
 int roll_period_count = 0;
 const int roll_total_period = 5;
 int walk_period_count = 0;
-const int walk_total_period = 20;
+const int walk_total_period = 10;
 const int walk_half_period = walk_total_period / 2;
 
 const float deg = M_PIf / 180;
@@ -44,7 +44,7 @@ const float yaw_d_phase = roll_d_phase + M_PIf/2; //暂时不用了
 
 //计算转弯
 //const float k_c = 5 * deg; //转弯的速度 单位和仿真的不同，为：deg/周期
-const float k_c = 0 * deg; //转弯的速度 单位和仿真的不同，为：deg/周期
+const float k_c = 8 * deg; //转弯的速度 单位和仿真的不同，为：deg/周期
 
 //用于记录带转弯的期望的转角
 float xd_yaw_pro0 = 0;
@@ -85,10 +85,13 @@ void RoboRolyWalkUpdate()
     xd_yaw_turn_offset_0 = 0;
     xd_yaw_turn_offset_1 = 0;
     if (robot_fsm == fsm_walk){
-        if (walk_period_count < walk_half_period) {
+//        if (walk_period_count < walk_half_period)
+        if (true)
+        {
             xd_yaw_turn_offset_0 = k_c * (sin_time * f_d + (float)walk_period_count);
             xd_yaw_turn_offset_1 = k_c * f_d;
-        } else {
+        } else
+        {
             xd_yaw_turn_offset_0 = k_c * ((float)walk_total_period - sin_time * f_d - (float)walk_period_count);
             xd_yaw_turn_offset_1 = -k_c * f_d;
         }
@@ -109,8 +112,8 @@ void RoboRolyWalkUpdate()
     const static float F_pitch[5]= {0.39004f, 1.3872465f, 1.22441938521261f, 1.43267121f, 0.1143467239f};
     const static float F_roll[5]= {0.39004f, 1.3872465086f, 0.386598045243584f, 1.39867824278894f, 0.1143467238929f};
     //yaw的这个权重调整后在matlab重新生成
-    const static float F_yaw[5]= {23.6762444052160f, 24.1615412389158f, 20.5010253203498f, 24.1764796523058f, 0.434720700061298f};
-//    const static float F_yaw[5]= {38.1774f,   38.8566f,  -22.8989f,  -38.7880f,    0.7077f};
+//    const static float F_yaw[5]= {23.6762444052160f, 24.1615412389158f, 20.5010253203498f, 24.1764796523058f, 0.434720700061298f};
+    const static float F_yaw[5]= {38.1774f,   38.8566f,  -22.8989f,  -38.7880f,    0.7077f};
     memcpy(xa_pitch.F, F_pitch, sizeof(F_pitch));
     memcpy(xa_roll.F, F_roll, sizeof(F_roll));
     memcpy(xa_yaw.F, F_yaw, sizeof(F_yaw));
@@ -145,7 +148,7 @@ void RoboRolyWalkUpdate()
             {-0.4082483f, 0.7071068f, -0.5773503f},
             {-0.4082483f, -0.7071068f, -0.5773503f}};
 
-    float K = 20.0f;
+    float K = 40.0f;
     motorCmd.m1 = K * (speedMatrix[0][0] * xa_roll.u + speedMatrix[0][1] * xa_pitch.u + speedMatrix[0][2] * xa_yaw.u);
     motorCmd.m2 = K * (speedMatrix[1][0] * xa_roll.u + speedMatrix[1][1] * xa_pitch.u + speedMatrix[1][2] * xa_yaw.u);
     motorCmd.m3 = K * (speedMatrix[2][0] * xa_roll.u + speedMatrix[2][1] * xa_pitch.u + speedMatrix[2][2] * xa_yaw.u);

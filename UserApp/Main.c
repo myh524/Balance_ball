@@ -64,7 +64,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         robot_time += h; //单位s
 
 
-        if (robot_fsm == fsm_waitToStart && robot_time >= 5.0f){
+        if (robot_fsm == fsm_waitToStart && robot_time >= 1.0f){
             robot_fsm = fsm_roll; //更新状态
             init_x_d(&xa_roll, roll_d_sin_A, roll_d_phase);
         }
@@ -231,8 +231,9 @@ void Main(void) {
         }
 
         //----------------------------------------wifi通信发送-----------------------------------
-//        printf("%.3f,%.3f,%.3f\r\n", xa_roll.x_d, xa_pitch.x_d, xa_yaw.x_d);
-        printf("%.3f,%.3f,%.3f,%.3f,%.3f,%.3f\r\n", plot_data[0], plot_data[1], plot_data[2], plot_data[3], plot_data[4], plot_data[5]);
+        printf("%.3f,%.3f,%.3f,%.3f,%.3f,%.3f\r\n", xa_roll.x_d, xa_pitch.x_d, xa_yaw.x_d, xa_roll.x, xa_pitch.x, xa_yaw.x);
+//        printf("%.3f,%.3f,%.3f,%.3f,%.3f,%.3f\r\n", plot_data[0], plot_data[1], plot_data[2], plot_data[3], plot_data[4], plot_data[5]);
+//        printf("%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f\r\n", robot_time, q[0], q[1], q[2], q[3], gyro_f.x, gyro_f.y, gyro_f.z, xa_roll.u, xa_pitch.u, xa_yaw.u);
 
 //        printf("Hello World!\r\n");
 
