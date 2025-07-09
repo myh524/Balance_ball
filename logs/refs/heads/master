@@ -1,0 +1,31 @@
+0000000000000000000000000000000000000000 cbcc1c1db7fa96c718cca416a7222cdacd1e9ed3 sytnocui <1079851849@qq.com> 1690216725 +0800	commit (initial): 大框架已经搭建完毕，剩填各个模式的具体代码，与底层驱动更新，还有wifi通信协议
+cbcc1c1db7fa96c718cca416a7222cdacd1e9ed3 50e9550deedf738018710b3e77a69a7a1bdb5cad sytnocui <1079851849@qq.com> 1690296742 +0800	commit: 所有代码填充完毕，三大控制模式书写完毕，还没测试，给lmh
+50e9550deedf738018710b3e77a69a7a1bdb5cad f7cc913c7803dd808b28b3bc1e16d7a2e530e2e1 sytnocui <1079851849@qq.com> 1690297055 +0800	commit: 所有代码填充完毕，三大控制模式书写完毕，还没测试，给lmh
+f7cc913c7803dd808b28b3bc1e16d7a2e530e2e1 d24c54d09e53be7b18af18ee8981458d28fe001d sytnocui <1079851849@qq.com> 1690297309 +0800	commit (amend): 发现之前的提交忘提交上spi的底层驱动了，补交。
+d24c54d09e53be7b18af18ee8981458d28fe001d fae931b3a079ffa9317c2fb288150bc9453e7292 sytnocui <1079851849@qq.com> 1691236364 +0800	commit: 刘沐航改完了，自稳调出来了，有一堆文件不同是因为换行符不同，不用管
+fae931b3a079ffa9317c2fb288150bc9453e7292 a97229ab883896bd13443dcae5223e48fb0ad193 sytnocui <1079851849@qq.com> 1691238935 +0800	commit: 简化wifi读取代码，尚未测试
+a97229ab883896bd13443dcae5223e48fb0ad193 50993eed0196945332bf95c12314d49484fcb23b sytnocui <1079851849@qq.com> 1693296353 +0800	commit: 加上陀螺仪自检，调完飞轮方向，试出助力和阻力模式，赢。之后调参，调定姿
+50993eed0196945332bf95c12314d49484fcb23b cd6859ff9a5a927e108d23b6a41f85844b833402 sytnocui <1079851849@qq.com> 1693299894 +0800	commit: 普通串级环至少能用，加上了死区，但效果类似棒棒控制根本没法看，试试变成两环叠加
+cd6859ff9a5a927e108d23b6a41f85844b833402 315f174176376b2f025997eb07b76ac4f428b172 sytnocui <1079851849@qq.com> 1693659970 +0800	commit: 助力和阻力模式都能用，准备大改控制算法
+315f174176376b2f025997eb07b76ac4f428b172 5bf5100c08cfeeda36275e9b8fa6abba50363fba sytnocui <1079851849@qq.com> 1695807555 +0800	commit: 闭环控制代码改成了控制速度变化量，能用。但是很容易莫名其妙的死区，改成不加PID
+5bf5100c08cfeeda36275e9b8fa6abba50363fba 7c133bb8608de280b6c64848547074f2eec2a479 sytnocui <1079851849@qq.com> 1695807565 +0800	commit (amend): 闭环控制代码改成了控制速度变化量，能用。但是很容易莫名其妙的死区，改成不加PID
+7c133bb8608de280b6c64848547074f2eec2a479 6e421c19a269f8f87e55f2a250bf8e7f689e8827 sytnocui <1079851849@qq.com> 1695807575 +0800	commit (amend): 闭环控制代码改成了控制速度变化量，能用。但是很容易莫名其妙的死区，准备改成不加PID
+6e421c19a269f8f87e55f2a250bf8e7f689e8827 033fb4b7306cdbda29d5d90a487d929de1bab52c sytnocui <1079851849@qq.com> 1696791708 +0800	commit: 这下去掉PID效果好的一比，pos模式实际上是去掉PID的模式
+033fb4b7306cdbda29d5d90a487d929de1bab52c 1c93d062b88ee5827755cc7cbeb9482b26a95f53 宋以拓 <1079851849@qq.com> 1715180863 +0800	commit: 【球s2赛季开启】合上纪哥代码，倾斜安装角度的姿态解算能用
+1c93d062b88ee5827755cc7cbeb9482b26a95f53 94b74b51e51a710ecf8d8d91fba7d15a4c807507 宋以拓 <1079851849@qq.com> 1715184673 +0800	commit: 【球s2赛季继续】合上刘沐航代码，can发目标速度能用
+94b74b51e51a710ecf8d8d91fba7d15a4c807507 4d92ba23a82ae4760b9dd94cba4817d3b074eb89 宋以拓 <1079851849@qq.com> 1715443079 +0800	commit: 调了波参数，远程遥控测试成功，但有三个电机没校准的问题。
+4d92ba23a82ae4760b9dd94cba4817d3b074eb89 b3eb072ddedb3ab3eae9ef88dda37622e4746ce3 宋以拓 <1079851849@qq.com> 1719928926 +0800	commit: 小改一波配置文件为了适配GD32，但是出现了CAN不好使的问题，调GD32之后再说
+b3eb072ddedb3ab3eae9ef88dda37622e4746ce3 c0228d4ff56dc1c14f3d1fee98552f2f52062106 宋以拓 <1079851849@qq.com> 1721646826 +0800	commit (amend): 小改一波配置文件为了适配GD32，但是出现了CAN不好使的问题，调GD32之后再说
+c0228d4ff56dc1c14f3d1fee98552f2f52062106 d3e4e6a763c35ee83a7d49bdbe7fe897c8623f58 宋以拓 <1079851849@qq.com> 1722262774 +0800	commit: 先不管GD32，全力调stm32，复现完毕，优化代码，现在是力矩环。roll轴正反还不对。
+d3e4e6a763c35ee83a7d49bdbe7fe897c8623f58 4e36e5aa81be7d6b71c8737c60cc04c07b525b01 宋以拓 <1079851849@qq.com> 1722264203 +0800	commit: roll轴力矩方向改正过来了
+4e36e5aa81be7d6b71c8737c60cc04c07b525b01 4f5fd96a5e0b02846979655ab37e75816779dc18 宋以拓 <1079851849@qq.com> 1722265258 +0800	commit: 添回来了安全控制，但是自稳目前还是跟随，下一步恢复自稳
+4f5fd96a5e0b02846979655ab37e75816779dc18 df04d05f96fd4c74b0a8b2aff464ddc125acb903 宋以拓 <1079851849@qq.com> 1734446142 +0800	commit: 规范宏定义与变量名称，力矩模式命名
+df04d05f96fd4c74b0a8b2aff464ddc125acb903 caead655dc6dc650dd0a692169ead7a4721b1c38 宋以拓 <1079851849@qq.com> 1736351825 +0800	commit: 合了刘沐航的代码，改了电机驱动can协议，能编译通过，但是没转
+caead655dc6dc650dd0a692169ead7a4721b1c38 e3735294a9052a38c2de55bdb39ca592563f0523 宋以拓 <1079851849@qq.com> 1736416186 +0800	commit: 合了刘沐航代码，测试能转了，下一步部署roll闭环控制器
+e3735294a9052a38c2de55bdb39ca592563f0523 25b2f0ea1008cdd6fd2ee57d23dce0790d2b61a5 宋以拓 <1079851849@qq.com> 1736432616 +0800	commit: 精简控制代码，现在把所有东西全写一个函数里，不要解锁，不要状态控制
+25b2f0ea1008cdd6fd2ee57d23dce0790d2b61a5 72df1485e7d05b8c2156d660c0fdea013a609be1 宋以拓 <1079851849@qq.com> 1736788177 +0800	commit: 添加了所有LQR控制代码，预计有很多bug，准备测试
+72df1485e7d05b8c2156d660c0fdea013a609be1 3c9dc2ae86678c325b43221863b2d82fd859750b 宋以拓 <1079851849@qq.com> 1736789256 +0800	commit: 测试行走成功，但很抽象，之后再看看哪有问题
+3c9dc2ae86678c325b43221863b2d82fd859750b be58ce2f66d90965ed975e640ce358327b39bd06 宋以拓 <1079851849@qq.com> 1736867402 +0800	commit: 加上了状态机，先振起来再走，完全胜利，一点都不漂，大赢！
+be58ce2f66d90965ed975e640ce358327b39bd06 8e865083f51b93a40019ec39a8a973b96ae310ca 宋以拓 <1079851849@qq.com> 1736960411 +0800	commit: 开始调转弯，遇到了调节F_yaw反馈参数会导致球一会往前，一会往后走的问题，待解决
+8e865083f51b93a40019ec39a8a973b96ae310ca 061f58b0ddcd96d5414535f53e2154f56017810c 宋以拓 <1079851849@qq.com> 1737441580 +0800	merge origin/master: Fast-forward
+061f58b0ddcd96d5414535f53e2154f56017810c 60763f631af651b13ae32a9a4b2c670e587ee54a 宋以拓 <1079851849@qq.com> 1742195206 +0800	commit: 发现了愚蠢的正负号bug，这下完全调通了
