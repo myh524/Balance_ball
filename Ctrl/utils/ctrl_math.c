@@ -88,8 +88,7 @@ float sin_approx(float x)
 // http://http.developer.nvidia.com/Cg/atan2.html (not working correctly!)
 // Poly coefficients by @ledvinap (https://github.com/cleanflight/cleanflight/pull/1107)
 // Max absolute error 0,000027 degree
-float atan2_approx(float y, float x)
-{
+
 #define atanPolyCoef1  3.14551665884836e-07f
 #define atanPolyCoef2  0.99997356613987f
 #define atanPolyCoef3  0.14744007058297684f
@@ -98,6 +97,8 @@ float atan2_approx(float y, float x)
 #define atanPolyCoef6  0.1471039133652469f
 #define atanPolyCoef7  0.6444640676891548f
 
+float atan2_approx(float y, float x)
+{
     float res, absX, absY;
     absX = fabsf(x);
     absY = fabsf(y);

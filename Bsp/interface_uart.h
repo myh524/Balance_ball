@@ -12,11 +12,11 @@ extern "C" {
 #include "usart.h"
 #include "ctrl_types.h"
 
-#define WIFI_BUFFER_LENGTH     16
+#define WIFI_BUFFER_LENGTH     14
 extern uint8_t wifi_rx_buffer[WIFI_BUFFER_LENGTH];
 
 void WIFIRead(uint8_t* _rx_buffer, ctrl_rc_t* _rc);
-
+    void ANOTC_Quaternion_Upload(void);
 
 #ifdef __cplusplus
 }

@@ -10,12 +10,32 @@
 #include <interface_uart.h>
 #include <retarget.h>
 #include <math.h>
+#include <string.h>
+
 #include "common_inc.h"
 #include "can.h"
 #include "RoboRoly.h"
 #include "utils/attitude_utils.h"
 #include "lqr.h"
 #include "nouse/ctrl.h"
+
+// 接收缓冲区
+uint8_t rx_buffer[256];        // 足够大的接收缓冲区
+uint8_t txBuffer[30];
+float motor_cmd[3]={0};
+
+// 状态机状态
+typedef enum {
+    WAIT_HEAD1,
+    WAIT_HEAD2,
+    RECEIVING_DATA,
+    WAIT_CHECKSUM,
+    WAIT_TAIL1,
+    WAIT_TAIL2,
+    FRAME_COMPLETE
+} FrameState;
+
+FrameState frame_state = WAIT_HEAD1;
 
 // 定义用哪个陀螺仪
 enum IMU_CONFIG{
@@ -25,14 +45,38 @@ enum IMU_CONFIG{
 } imu_config;
 
 uint16_t safe_time = 0;
+
 /* Thread Definitions -----------------------------------------------------*/
 
 /* Timer Callbacks -------------------------------------------------------*/
 
+
+
+void WIFI_UART_SendData(void)
+{
+    //float speed = 2.33656;
+
+    txBuffer[0] =  0xAA;
+    memcpy(&txBuffer[1], &q[0], sizeof(float));
+    memcpy(&txBuffer[5], &q[1], sizeof(float));
+    memcpy(&txBuffer[9], &q[2], sizeof(float));
+    memcpy(&txBuffer[13], &q[3], sizeof(float));
+    memcpy(&txBuffer[17], &(gyro_f.x), sizeof(float));
+    memcpy(&txBuffer[21], &(gyro_f.y), sizeof(float));
+    memcpy(&txBuffer[25], &(gyro_f.z), sizeof(float));
+    txBuffer[29] = 0x55;
+
+    HAL_UART_Transmit_DMA(&WIFI_UART, txBuffer, sizeof(txBuffer));
+}
+
+
+
+
 float target_vel = 0.0f;
 float target_torque = 0.0f;
+int angle_receive = 0;
 
-
+float count_n=0.0f;
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
     //tim3定时器中断
     if (htim->Instance == TIM3) {
@@ -51,63 +95,33 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         //姿态解算
         //这里传入的参数坐标系有一个转换关系
         MahonyAHRSupdateIMU(q, gyro_f.x, gyro_f.y, gyro_f.z, acc_f.x, acc_f.y, acc_f.z);
-        // 四元数反解欧拉角
-        QuaternionToEuler_ZXY(q, &state_eul);
-
-        //解算出欧拉角的变化率，供LQR使用
-        w2deul_zxy(&state_eul, &gyro_f, &state_deul);
+        // // 四元数反解欧拉角
+        // QuaternionToEuler_ZXY(q, &state_eul);
+        //
+        // //解算出欧拉角的变化率，供LQR使用
+        // w2deul_zxy(&state_eul, &gyro_f, &state_deul);
 //        // 转换单位(可视化用的)
 //        AttitudeRadianToAngle(&state_eul,&state_attitude_angle);
 
+        WIFI_UART_SendData();
+//        ANOTC_Quaternion_Upload();
 
-        //更新时间
-        robot_time += h; //单位s
+        //发送目标数据，实施控制
+         Driver_Torque_Control(M1,motorCmd.m1);
+         Driver_Torque_Control(M2,motorCmd.m2);
+         Driver_Torque_Control(M3,motorCmd.m3);
 
-
-        if (robot_fsm == fsm_waitToStart && robot_time >= 1.0f){
-            robot_fsm = fsm_roll; //更新状态
-            init_x_d(&xa_roll, roll_d_sin_A, roll_d_phase);
-        }
-
-        if (robot_fsm == fsm_roll)
-        {
-            roll_time += h; //单位s
-            sin_time += h; //单位s
-            if(sin_time > t_d){
-                sin_time = 0;
-                roll_period_count++;
-            }
-            //如果超周期了，就切换状态，开始行走
-            //注意这里延迟了pi/2赋值，为了使yaw开始时为0;
-            if (roll_period_count >= roll_total_period && sin_time >= t_d/4)
-            {
-                robot_fsm = fsm_walk;
-                init_x_d(&xa_yaw, yaw_d_sin_A, 0); //注意相位
-            }
-        }
-
-        if (robot_fsm == fsm_walk)
-        {
-            walk_time += h; //单位s
-            sin_time += h; //单位s
-            if(sin_time > t_d){
-                sin_time = 0;
-                walk_period_count++;
-            }
-
-            //如果超周期了，就切换状态，停止运动
-            if (walk_period_count >= walk_total_period)
-            {
-                robot_fsm = fsm_stop;
-                init_x_d(&xa_roll, 0, 0);
-                init_x_d(&xa_pitch, 0, 0);
-                init_x_d(&xa_yaw, 0, 0);
-            }
-
-        }
-        //更新主控制器
-        RoboRolyWalkUpdate();
-
+        // count_n+=0.1f;
+        // if (count_n>=50.0f) {
+        //     count_n=0.0f;
+        // }
+        //  Driver_Torque_Control(M1,count_n*10.0f);
+        //  Driver_Torque_Control(M2,count_n*10.0f);
+        //  Driver_Torque_Control(M3,count_n*10.0f);
+        // Driver_Velocity_Control(M1,count_n);
+        // Driver_Velocity_Control(M2,count_n);
+        // Driver_Velocity_Control(M3,count_n);
+        //
 
 
 ////////////////////////////////////////////////////////////////////
@@ -133,10 +147,14 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 {
     if(huart->Instance==USART2)
     {
-        //串口dma+空闲中断，接受wifi的指令
-//        WIFIRead(wifi_rx_buffer, &ctrl_rc);
+        //Blink
+        // HAL_GPIO_TogglePin(LED0_GPIO_Port,LED0_Pin);
+        if (wifi_rx_buffer[0]==0xAA && wifi_rx_buffer[13]==0x55) {
 
-
+            memcpy( &motorCmd.m1, &wifi_rx_buffer[1], sizeof(float) );
+            memcpy( &motorCmd.m2, &wifi_rx_buffer[5], sizeof(float) );
+            memcpy( &motorCmd.m3, &wifi_rx_buffer[9], sizeof(float) );
+        }
         //重新打开DMA接收 idle中断
         HAL_UARTEx_ReceiveToIdle_DMA(&WIFI_UART, wifi_rx_buffer, sizeof(wifi_rx_buffer));
     }
@@ -160,6 +178,15 @@ void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan)
 
     HAL_CAN_ActivateNotification(hcan, CAN_IT_RX_FIFO1_MSG_PENDING);
 }
+
+uint8_t calculate_checksum(uint8_t *data, uint16_t length) {
+    uint8_t checksum = 0;
+    for (uint16_t i = 0; i < length; i++) {
+        checksum ^= data[i];
+    }
+    return checksum;
+}
+
 
 /* Default Entry -------------------------------------------------------*/
 void Main(void) {
@@ -197,13 +224,13 @@ void Main(void) {
     /////////////////////////////////////////////////////////////////////////
     /// LQR
     /////////////////////////////////////////////////////////////////////////
-    init_x_d(&xa_roll, 0, 0);
-    init_x_d(&xa_pitch, 0, 0);
-    init_x_d(&xa_yaw, 0, 0);
-    //LQR 获取期望状态的状态转移矩阵
-    init_A_d(0, h, &xa_pitch);
-    init_A_d(w_d, h, &xa_roll);
-    init_A_d(w_d, h, &xa_yaw);
+    // init_x_d(&xa_roll, 0, 0);
+    // init_x_d(&xa_pitch, 0, 0);
+    // init_x_d(&xa_yaw, 0, 0);
+    // //LQR 获取期望状态的状态转移矩阵
+    // init_A_d(0, h, &xa_pitch);
+    // init_A_d(w_d, h, &xa_roll);
+    // init_A_d(w_d, h, &xa_yaw);
     //////////////////////////////////////////////////////////////////////
     //PID
 //    CtrlPIDInit();
@@ -231,7 +258,9 @@ void Main(void) {
         }
 
         //----------------------------------------wifi通信发送-----------------------------------
-        printf("%.3f,%.3f,%.3f,%.3f,%.3f,%.3f\r\n", xa_roll.x_d, xa_pitch.x_d, xa_yaw.x_d, xa_roll.x, xa_pitch.x, xa_yaw.x);
+           ;
+        //printf("%.3f,%.3f,%.3f",motor_cmd[0],motor_cmd[1],motor_cmd[2]);
+       //printf("%.3f,%.3f,%.3f,%.3f,%.3f,%.3f\r\n", gyro_f.x, gyro_f.y, gyro_f.z, acc_f.x, acc_f.y, acc_f.z);
 //        printf("%.3f,%.3f,%.3f,%.3f,%.3f,%.3f\r\n", plot_data[0], plot_data[1], plot_data[2], plot_data[3], plot_data[4], plot_data[5]);
 //        printf("%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f\r\n", robot_time, q[0], q[1], q[2], q[3], gyro_f.x, gyro_f.y, gyro_f.z, xa_roll.u, xa_pitch.u, xa_yaw.u);
 

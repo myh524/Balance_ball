@@ -257,8 +257,8 @@ void icm42688AccTransformUnit(Axis3i16* _acc, Axis3f* _acc_f, Axis3i16* _acc_dri
 void icm42688GyroTransformUnit(Axis3i16* _gyro, Axis3f* _gyro_f, Axis3i16* _gyro_drift)
 {
     _gyro_f->x = (float) (_gyro->x - _gyro_drift->x) * gyroSensitivity * (3.1415f / 180);
-    _gyro_f->y = (float) (_gyro->y - _gyro_drift->y) * gyroSensitivity * (3.1415f / 180);
-    _gyro_f->z = (float) (_gyro->z - _gyro_drift->z) * gyroSensitivity * (3.1415f / 180);
+    _gyro_f->y = (float) (_gyro->y + _gyro_drift->y) * gyroSensitivity * (3.1415f / 180);
+    _gyro_f->z = (float) (_gyro->z + _gyro_drift->z) * gyroSensitivity * (3.1415f / 180);
 }
 
 
@@ -304,10 +304,10 @@ void ImuTransformer(Axis3i16* _acc_raw, Axis3i16* _acc,Axis3i16* _gyro_raw, Axis
 {
 
     _acc->x = _acc_raw->x;
-    _acc->y = _acc_raw->y;
-    _acc->z = _acc_raw->z;
+    _acc->y = -_acc_raw->y;
+    _acc->z = -_acc_raw->z;
 
     _gyro->x =_gyro_raw->x;
-    _gyro->y =_gyro_raw->y;
-    _gyro->z =_gyro_raw->z;
+    _gyro->y =-_gyro_raw->y;
+    _gyro->z =-_gyro_raw->z;
 }

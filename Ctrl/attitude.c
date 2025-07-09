@@ -148,10 +148,15 @@ void AttitudeRadianToAngle(attitude_t* radian, attitude_t* angle){
 }
 
 void CoordinateRotation(Axis3i16* _acc, Axis3i16* _gyro, Axis3i16* _acc_body, Axis3i16* _gyro_body){
+    // double CoordinateMat[3][3] =
+    // {-0.408248290463863,    -0.408248290463863,  0.816496580927726,
+    //  -0.707106781186548,     0.707106781186547,  0,
+    //  -0.577350269189626,    -0.577350269189626,  -0.577350269189626};
+
     double CoordinateMat[3][3] =
-    {-0.408248290463863,    -0.408248290463863,  0.816496580927726,
-     -0.707106781186548,     0.707106781186547,  0,
-     -0.577350269189626,    -0.577350269189626,  -0.577350269189626};
+    {1.0,0.0,0.0,
+     0.0,1.0,0.0,
+     0.0,0.0,1.0,};
     _acc_body->x = CoordinateMat[0][0] * _acc->x + CoordinateMat[0][1] * _acc->y + CoordinateMat[0][2] * _acc->z;
     _acc_body->y = CoordinateMat[1][0] * _acc->x + CoordinateMat[1][1] * _acc->y + CoordinateMat[1][2] * _acc->z;
     _acc_body->z = CoordinateMat[2][0] * _acc->x + CoordinateMat[2][1] * _acc->y + CoordinateMat[2][2] * _acc->z;
